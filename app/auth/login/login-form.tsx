@@ -222,7 +222,7 @@ export function LoginForm() {
           : mode === "login"
             ? "Se connecter"
             : "Créer un compte"}
-      </button><Link href="/auth/reset-password" className="block text-center text-sm text-gray-400 hover:text-teal-400 mt-2">Mot de passe oublié ?</Link>
+      </button><Link href="/reset-password" className="block text-center text-sm text-gray-400 hover:text-teal-400 mt-2">Mot de passe oublié ?</Link>
     </form>
   );
 }

@@ -2,22 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const body = await req.json();
+  const body = await req.json().catch(() => ({}));
   const { bookingId, amount, customerName, customerEmail, customerPhone } = body;
 
   if (!bookingId || !amount) {
     return NextResponse.json({ error: "bookingId et amount requis" }, { status: 400 });
   }
 
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const transactionId = `DASHIFY-${bookingId.slice(0, 8)}-${Date.now()}`;
 
   const payload = {
     apikey: process.env.CINETPAY_API_KEY,
-    site_id: process.env.CINETPAY_SITE_ID,
+    site_id: process.env.CINETPAY_SITE_ID || "0",
     transaction_id: transactionId,
     amount: Math.round(amount),
     currency: "XOF",
@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
   const data = await res.json();
 
   if (data.code !== "201") {
-    console.error("[CinetPay init]", data);
-    return NextResponse.json({ error: data.message || "Erreur CinetPay" }, { status: 500 });
+    console.error("[CinetPay init error]", JSON.stringify(data));
+    return NextResponse.json({ error: data.message || "Erreur CinetPay", details: data }, { status: 500 });
   }
 
   await supabase
@@ -55,5 +55,9 @@ export async function POST(req: NextRequest) {
     .update({ payment_transaction_id: transactionId })
     .eq("id", bookingId);
 
-  return NextResponse.json({ ok: true, paymentUrl: data.data.payment_url, transactionId });
+  return NextResponse.json({
+    ok: true,
+    paymentUrl: data.data.payment_url,
+    transactionId,
+  });
 }

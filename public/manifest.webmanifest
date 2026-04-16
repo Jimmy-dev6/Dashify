@@ -1,0 +1,10 @@
+{
+  "name": "Dashify",
+  "short_name": "Dashify",
+  "description": "Gestion de locations courte durée",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#0f766e",
+  "icons": []
+}

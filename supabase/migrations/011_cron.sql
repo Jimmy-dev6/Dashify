@@ -1,0 +1,18 @@
+-- pg_cron est disponible sur les projets Supabase éligibles.
+-- Les appels HTTP vers les Edge Functions se configurent souvent avec `vault` + URL du projet.
+-- Décommente et adapte une fois l’URL de la fonction `sync-ical` et les secrets connus.
+
+-- CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA extensions;
+-- SELECT cron.schedule(
+--   'sync-ical',
+--   '*/30 * * * *',
+--   $cmd$ select net.http_post(...) $cmd$
+-- );
+-- Expiration des devis envoyés (équivalent logique CONTEXT) :
+-- SELECT cron.schedule(
+--   'expire-quotes',
+--   '*/15 * * * *',
+--   $$UPDATE public.quotes
+--     SET status = 'expired'::public.quote_status, updated_at = now()
+--     WHERE status = 'sent'::public.quote_status AND expires_at < now()$$
+-- );

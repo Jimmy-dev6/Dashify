@@ -1,7 +1,7 @@
 export const runtime = "edge";
 export const preferredRegion = "cdg1";
+
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/client";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
@@ -11,8 +11,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "bookingId et amount requis" }, { status: 400 });
   }
 
-  // Auth vérifiée côté client - pas de check serveur sur edge
-
   const transactionId = `DASHIFY-${bookingId.slice(0, 8)}-${Date.now()}`;
 
   // Auth CinetPay
@@ -20,16 +18,15 @@ export async function POST(req: NextRequest) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      body: JSON.stringify({
-        login: process.env.CINETPAY_API_KEY,
-        password: process.env.CINETPAY_API_PASSWORD,
-      }),
+      login: process.env.CINETPAY_API_KEY,
+      password: process.env.CINETPAY_API_PASSWORD,
+    }),
   });
+
   const authData = await authRes.json();
   console.log("[CinetPay auth]", JSON.stringify(authData).slice(0, 200));
 
-  // Token est dans access_token (pas data.token)
-  const token = authData.access_token;
+  const token = authData.access_token || authData.data?.token;
   if (!token) {
     return NextResponse.json({ error: "Auth échouée", details: authData }, { status: 500 });
   }
@@ -56,14 +53,13 @@ export async function POST(req: NextRequest) {
       notify_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/notify`,
     }),
   });
+
   const payData = await payRes.json();
   console.log("[CinetPay payment]", JSON.stringify(payData).slice(0, 200));
 
   if (!payData.data?.payment_token) {
-    return NextResponse.json({ error: payData.message || "Erreur", details: payData }, { status: 500 });
+    return NextResponse.json({ error: payData.message || "Erreur paiement", details: payData }, { status: 500 });
   }
-
-// Update fait via webhook notify
 
   return NextResponse.json({
     ok: true,

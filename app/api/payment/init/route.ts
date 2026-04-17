@@ -1,7 +1,7 @@
+export const runtime = "edge";
+export const preferredRegion = "cdg1";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-
-export const maxDuration = 30;
+import { createClient } from "@/lib/supabase/client";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const transactionId = `DASHIFY-${bookingId.slice(0, 8)}-${Date.now()}`;
 
   // Auth CinetPay
-  const authRes = await fetch("https://client.cinetpay.com/v1/auth/login", {
+  const authRes = await fetch("https://api.cinetpay.net/v1/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

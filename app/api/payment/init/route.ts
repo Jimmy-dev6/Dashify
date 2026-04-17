@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      login: process.env.CINETPAY_API_KEY,
-      password: process.env.CINETPAY_API_PASSWORD,
+      api_key: process.env.CINETPAY_API_KEY,
+      api_password: process.env.CINETPAY_API_PASSWORD,
     }),
   });
 

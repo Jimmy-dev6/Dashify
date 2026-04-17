@@ -511,39 +511,39 @@ function BookingSidePanel({
             </span>
           </div>
         </div>
-        <div className="space-y-2 border-t border-gray-800 p-4">
+        <div className="space-y-2 border-t border-gray-800 p-4">{booking.payment_status !== "paid" && (
+  <button
+    type="button"
+    onClick={async () => {
+      try {
+        const res = await fetch("/api/payment/init", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bookingId: booking.id,
+            amount: booking.total,
+            customerName: booking.customer?.name || "Client",
+            customerEmail: "",
+            customerPhone: booking.customer?.phone || "",
+          }),
+        });
+        const data = await res.json();
+        if (data.paymentUrl) {
+          window.open(data.paymentUrl, "_blank");
+        } else {
+          alert("Erreur: " + (data.error || "Paiement indisponible"));
+        }
+      } catch (e) {
+        alert("Erreur paiement");
+      }
+    }}
+    className={cn("flex w-full items-center justify-center gap-2 rounded-lg border border-teal-500/30 bg-teal-500/10 py-2.5 text-sm font-medium text-teal-400 hover:bg-teal-500/20")}
+  >
+    💳 Payer via CinetPay
+  </button>
+)}
           <button
             type="button"
-            {booking.payment_status !== "paid" && (
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await fetch("/api/payment/init", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        bookingId: booking.id,
-                        amount: booking.total,
-                        customerName: booking.customer?.name || "Client",
-                        customerEmail: "",
-                        customerPhone: booking.customer?.phone || "",
-                      }),
-                    });
-                    const data = await res.json();
-                    if (data.paymentUrl) {
-                      window.open(data.paymentUrl, "_blank");
-                    } else {
-                      alert("Erreur: " + (data.error || "Paiement indisponible"));
-                    }
-                  } catch (e) {
-                    alert("Erreur paiement");
-                  }
-                }}
-                className="rounded-lg bg-teal-500/10 px-3 py-1.5 text-xs font-medium text-teal-400 ring-1 ring-teal-500/20 hover:bg-teal-500/20"
-              >
-                Payer
-              </button>
-            )}
             onClick={sendWhatsApp}
             disabled={booking.status === "cancelled"}
             className={cn(

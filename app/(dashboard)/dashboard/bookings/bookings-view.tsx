@@ -531,7 +531,7 @@ function BookingSidePanel({
         if (data.paymentUrl) {
           window.open(data.paymentUrl, "_blank");
         } else {
-          alert("Erreur: " + (data.error || "Paiement indisponible"));
+          alert("Erreur: " + JSON.stringify(data));
         }
       } catch (e) {
         alert("Erreur paiement");

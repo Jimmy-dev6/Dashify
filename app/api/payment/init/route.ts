@@ -20,9 +20,10 @@ export async function POST(req: NextRequest) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      apikey: process.env.CINETPAY_API_KEY,
-      password: process.env.CINETPAY_API_PASSWORD,
-    }),
+      body: JSON.stringify({
+        login: process.env.CINETPAY_API_KEY,
+        password: process.env.CINETPAY_API_PASSWORD,
+      }),
   });
   const authData = await authRes.json();
   console.log("[CinetPay auth]", JSON.stringify(authData).slice(0, 200));

@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const transactionId = `DASHIFY-${bookingId.slice(0, 8)}-${Date.now()}`;
 
   // Auth CinetPay
-  const authRes = await fetch("https://api.cinetpay.net/v1/auth/login", {
+  const authRes = await fetch("https://api.cinetpay.net/v1/oauth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

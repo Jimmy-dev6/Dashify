@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { RevenueChart } from "@/components/dashboard/revenue-chart";
+import { UpcomingArrivals } from "@/components/dashboard/upcoming-arrivals";
+import { UpcomingEvents } from "@/components/dashboard/upcoming-events";
 import {
   BanknotesIcon,
   BuildingOffice2Icon,
@@ -18,9 +21,27 @@ interface DashStats {
   pendingQuotes: number;
 }
 
+type RevenuePoint = {
+  month: string;
+  revenue: number;
+  key: string;
+};
+
+type Arrival = {
+  id: string;
+  check_in: string;
+  check_out: string;
+  total: number;
+  customer: { id: string; name: string } | null;
+  property: { id: string; name: string } | null;
+};
+
 export default function DashboardHomePage() {
   const [stats, setStats] = useState<DashStats | null>(null);
+  const [revenueSeries, setRevenueSeries] = useState<RevenuePoint[]>([]);
+  const [arrivals, setArrivals] = useState<Arrival[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingOverview, setLoadingOverview] = useState(true);
 
   useEffect(() => {
     const now = new Date();
@@ -36,11 +57,22 @@ export default function DashboardHomePage() {
           bookings: bookings.length,
           revenue: bookings.reduce((s: number, x: { total?: number }) => s + (x.total ?? 0), 0),
           clients: (c.clients ?? []).length,
-          pendingQuotes: (q.quotes ?? []).filter((x: { status: string }) => x.status === "draft" || x.status === "sent").length,
+          pendingQuotes: (q.quotes ?? []).filter(
+            (x: { status: string }) => x.status === "draft" || x.status === "sent",
+          ).length,
         });
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    fetch("/api/dashboard/overview")
+      .then((r) => r.json())
+      .then((data) => {
+        setRevenueSeries(data.revenueSeries ?? []);
+        setArrivals(data.upcomingArrivals ?? []);
+      })
+      .catch(console.error)
+      .finally(() => setLoadingOverview(false));
   }, []);
 
   const fmt = (n: number) =>
@@ -82,7 +114,20 @@ export default function DashboardHomePage() {
           hint="brouillon ou envoyé"
         />
       </div>
-      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+
+      {/* Graphique revenus - full width */}
+      <div className="mt-6">
+        <RevenueChart data={revenueSeries} loading={loadingOverview} />
+      </div>
+
+      {/* Ligne 1 : Prochaines arrivées + Événements */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <UpcomingArrivals arrivals={arrivals} loading={loadingOverview} />
+        <UpcomingEvents />
+      </div>
+
+      {/* Ligne 2 : Accès rapide + Activité récente (existant) */}
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-gray-700 bg-gray-800/80 p-6 shadow-sm">
           <h2 className="text-sm font-semibold text-white">Accès rapide</h2>
           <ul className="mt-4 space-y-2 text-sm">
@@ -93,7 +138,10 @@ export default function DashboardHomePage() {
               { href: "/dashboard/bookings", label: "Réservations du mois" },
             ].map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className="flex items-center justify-between rounded-lg px-3 py-2 text-teal-400 hover:bg-teal-500/10">
+                <Link
+                  href={l.href}
+                  className="flex items-center justify-between rounded-lg px-3 py-2 text-teal-400 hover:bg-teal-500/10"
+                >
                   {l.label}
                   <span aria-hidden>→</span>
                 </Link>
@@ -104,7 +152,9 @@ export default function DashboardHomePage() {
         <div className="rounded-xl border border-dashed border-gray-700 bg-gray-900/40 p-6">
           <h2 className="text-sm font-semibold text-white">Activité récente</h2>
           <p className="mt-2 text-sm leading-relaxed text-gray-400">
-            {loading ? "Chargement…" : `${stats?.bookings ?? 0} réservation(s) ce mois · ${stats?.pendingQuotes ?? 0} devis en attente`}
+            {loading
+              ? "Chargement…"
+              : `${stats?.bookings ?? 0} réservation(s) ce mois · ${stats?.pendingQuotes ?? 0} devis en attente`}
           </p>
         </div>
       </div>

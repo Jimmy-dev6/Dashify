@@ -9,6 +9,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { PageHeader } from "@/components/dashboard/page-header";
+import HelpICalModal from "@/components/HelpICalModal";
 
 type Channel = {
   id: string;
@@ -99,6 +100,7 @@ export function ChannelsView() {
   const [syncAllLoading, setSyncAllLoading] = useState(false);
   const [modalPropertyId, setModalPropertyId] = useState<string | null>(null);
   const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -197,17 +199,36 @@ export function ChannelsView() {
         title="Channel Manager"
         description="Connectez les flux iCal Airbnb, Booking ou autres pour alimenter le calendrier Dashify."
         actions={
-          <button
-            type="button"
-            onClick={() => void syncAll()}
-            disabled={syncAllLoading || properties.length === 0}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-teal-500/40 bg-teal-500/10 px-4 py-2.5 text-sm font-semibold text-teal-200 hover:bg-teal-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <ArrowPathIcon className={cn("h-5 w-5", syncAllLoading && "animate-spin")} />
-            {syncAllLoading ? "Synchronisation…" : "Tout synchroniser"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-950 px-4 py-2.5 text-sm font-semibold text-gray-200 hover:bg-gray-800"
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" />
+                <path
+                  d="M10 14v-4M10 7v.01"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              Comment synchroniser ?
+            </button>
+            <button
+              type="button"
+              onClick={() => void syncAll()}
+              disabled={syncAllLoading || properties.length === 0}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-teal-500/40 bg-teal-500/10 px-4 py-2.5 text-sm font-semibold text-teal-200 hover:bg-teal-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ArrowPathIcon className={cn("h-5 w-5", syncAllLoading && "animate-spin")} />
+              {syncAllLoading ? "Synchronisation…" : "Tout synchroniser"}
+            </button>
+          </div>
         }
       />
+
 
       {toast && (
         <div className="mb-4 rounded-xl border border-teal-500/30 bg-teal-500/10 px-4 py-3 text-sm text-teal-100">
@@ -317,7 +338,7 @@ export function ChannelsView() {
         )}
       </div>
 
-      {modalPropertyId && (
+   {modalPropertyId && (
         <AddChannelModal
           propertyId={modalPropertyId}
           propertyName={properties.find((x) => x.id === modalPropertyId)?.name ?? ""}
@@ -328,6 +349,8 @@ export function ChannelsView() {
           }}
         />
       )}
+
+      <HelpICalModal open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }

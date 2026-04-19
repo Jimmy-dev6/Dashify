@@ -14,7 +14,9 @@ export default async function EditPropertyPage({ params }: { params: Promise<Par
 
   const { data, error } = await supabase
     .from("properties")
-    .select("id,name,city,base_price,cleaning_fee,currency")
+    .select(
+      "id,name,city,base_price,cleaning_fee,currency,description,internal_name,address,neighborhood,property_type,surface_m2,max_guests,bedrooms,beds,bathrooms,amenities",
+    )
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -24,6 +26,11 @@ export default async function EditPropertyPage({ params }: { params: Promise<Par
   }
 
   const action = updateProperty.bind(null, id);
+
+  // amenities peut être un jsonb (array) ou null
+  const amenities = Array.isArray(data.amenities)
+    ? data.amenities.filter((x): x is string => typeof x === "string")
+    : [];
 
   return (
     <PropertyForm
@@ -37,8 +44,18 @@ export default async function EditPropertyPage({ params }: { params: Promise<Par
         base_price: data.base_price,
         cleaning_fee: data.cleaning_fee,
         currency: data.currency,
+        description: data.description,
+        internal_name: data.internal_name,
+        address: data.address,
+        neighborhood: data.neighborhood,
+        property_type: data.property_type,
+        surface_m2: data.surface_m2,
+        max_guests: data.max_guests,
+        bedrooms: data.bedrooms,
+        beds: data.beds,
+        bathrooms: data.bathrooms,
+        amenities,
       }}
     />
   );
 }
-

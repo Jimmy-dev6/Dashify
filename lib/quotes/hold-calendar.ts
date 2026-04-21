@@ -20,16 +20,7 @@ export async function createQuoteHold(
 ): Promise<{ ok: boolean; error?: string }> {
   const { quoteId, propertyId, checkIn, checkOut } = params;
 
-  console.log("[hold-calendar] createQuoteHold → attempting insert", {
-    quoteId,
-    propertyId,
-    checkIn,
-    checkOut,
-  });
-
-  // IMPORTANT : .select() force Supabase à relire la ligne après insert.
-  // Si RLS bloque la lecture, on aura une erreur explicite au lieu d'un succès silencieux.
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("calendar_events")
     .insert({
       property_id: propertyId,
@@ -39,20 +30,20 @@ export async function createQuoteHold(
       status: "pending",
       external_uid: `quote:${quoteId}`,
     })
-    .select("id, property_id, start_date, end_date, source, status, external_uid")
+    .select("id")
     .single();
 
   if (error) {
-    console.error("[hold-calendar] createQuoteHold FAILED", {
+    console.error("[hold-calendar] createQuoteHold failed", {
       code: error.code,
       message: error.message,
       details: error.details,
       hint: error.hint,
+      quoteId,
     });
     return { ok: false, error: error.message };
   }
 
-  console.log("[hold-calendar] createQuoteHold SUCCESS", data);
   return { ok: true };
 }
 
@@ -64,27 +55,21 @@ export async function releaseQuoteHold(
   supabase: SupabaseClient,
   quoteId: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  console.log("[hold-calendar] releaseQuoteHold → deleting", { quoteId });
-
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("calendar_events")
     .delete()
     .eq("source", "quote_hold")
-    .eq("external_uid", `quote:${quoteId}`)
-    .select("id");
+    .eq("external_uid", `quote:${quoteId}`);
 
   if (error) {
-    console.error("[hold-calendar] releaseQuoteHold FAILED", {
+    console.error("[hold-calendar] releaseQuoteHold failed", {
       code: error.code,
       message: error.message,
+      quoteId,
     });
     return { ok: false, error: error.message };
   }
 
-  console.log("[hold-calendar] releaseQuoteHold SUCCESS", {
-    quoteId,
-    deletedCount: data?.length ?? 0,
-  });
   return { ok: true };
 }
 

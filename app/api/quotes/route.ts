@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkAvailability } from "@/lib/availability";
+import { createQuoteHold, expireOverdueQuotes } from "@/lib/quotes/hold-calendar";
 import { formatPolicyConditionsBlock, policyFromRow } from "@/lib/policies/format-wa";
 import type { PolicyRow } from "@/lib/policies/types";
 import {
@@ -60,6 +61,9 @@ export async function GET(req: Request) {
   const supabase = createClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Lazy expiration : nettoie les devis périmés avant de renvoyer la liste
+  await expireOverdueQuotes(supabase, userData.user.id);
 
   const profileCtx = await fetchProfileQuoteContext(supabase, userData.user.id);
 
@@ -394,6 +398,16 @@ export async function POST(req: Request) {
 
   if (fullPrice.data.promotion?.id) {
     void incrementPromotionUses(supabase, user.id, fullPrice.data.promotion.id);
+  }
+
+  // Créer le blocage calendrier pour ce devis (dates bloquées pendant sa validité)
+  if (quote?.id) {
+    await createQuoteHold(supabase, {
+      quoteId: quote.id as string,
+      propertyId,
+      checkIn,
+      checkOut,
+    });
   }
 
   return NextResponse.json({ ok: true, id: quote?.id });

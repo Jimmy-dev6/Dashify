@@ -16,14 +16,16 @@ export type ProfileRow = {
   notify_new_booking: boolean | null;
   notify_quote_expired: boolean | null;
   notify_ical_error: boolean | null;
+  payment_orange_money: string | null;
+  payment_wave: string | null;
+  payment_free_money: string | null;
+  payment_holder_name: string | null;
+  payment_instructions_extra: string | null;
   created_at?: string;
   updated_at?: string;
 };
 
-export const PROFILE_DEFAULTS: Omit<
-  ProfileRow,
-  "id" | "created_at" | "updated_at"
-> = {
+export const PROFILE_DEFAULTS: Omit<ProfileRow, "id" | "created_at" | "updated_at"> = {
   full_name: null,
   phone: null,
   avatar_url: null,
@@ -40,4 +42,9 @@ export const PROFILE_DEFAULTS: Omit<
   notify_new_booking: true,
   notify_quote_expired: true,
   notify_ical_error: true,
+  payment_orange_money: null,
+  payment_wave: null,
+  payment_free_money: null,
+  payment_holder_name: null,
+  payment_instructions_extra: null,
 };

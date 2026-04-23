@@ -90,6 +90,16 @@ function Toggle({
   );
 }
 
+// Affiche "778696339" en "+221 77 869 63 39" pour l'input
+function formatMobileNumberDisplay(raw: string | null): string {
+  if (!raw) return "";
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 9 && digits.startsWith("7")) {
+    return `+221 ${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 7)} ${digits.slice(7, 9)}`;
+  }
+  return raw;
+}
+
 function mergeLoaded(row: ProfileRow | null, emailFromApi: string) {
   const base: ProfileRow = row?.id
     ? { ...PROFILE_DEFAULTS, ...row, id: row.id }
@@ -125,6 +135,13 @@ export function SettingsView() {
   const [notifyQuoteExpired, setNotifyQuoteExpired] = useState(true);
   const [notifyIcalError, setNotifyIcalError] = useState(true);
 
+  // Config paiement (Phase 2)
+  const [paymentOrangeMoney, setPaymentOrangeMoney] = useState("");
+  const [paymentWave, setPaymentWave] = useState("");
+  const [paymentFreeMoney, setPaymentFreeMoney] = useState("");
+  const [paymentHolderName, setPaymentHolderName] = useState("");
+  const [paymentInstructionsExtra, setPaymentInstructionsExtra] = useState("");
+
   const load = useCallback(async () => {
     setLoading(true);
     setBanner(null);
@@ -150,6 +167,12 @@ export function SettingsView() {
       setNotifyNewBooking(profile.notify_new_booking ?? true);
       setNotifyQuoteExpired(profile.notify_quote_expired ?? true);
       setNotifyIcalError(profile.notify_ical_error ?? true);
+      // Config paiement
+      setPaymentOrangeMoney(formatMobileNumberDisplay(profile.payment_orange_money));
+      setPaymentWave(formatMobileNumberDisplay(profile.payment_wave));
+      setPaymentFreeMoney(formatMobileNumberDisplay(profile.payment_free_money));
+      setPaymentHolderName(profile.payment_holder_name ?? "");
+      setPaymentInstructionsExtra(profile.payment_instructions_extra ?? "");
     } catch (e) {
       setBanner({ type: "err", text: e instanceof Error ? e.message : "Erreur" });
     } finally {
@@ -185,11 +208,19 @@ export function SettingsView() {
           notify_new_booking: notifyNewBooking,
           notify_quote_expired: notifyQuoteExpired,
           notify_ical_error: notifyIcalError,
+          // Config paiement
+          payment_orange_money: paymentOrangeMoney || null,
+          payment_wave: paymentWave || null,
+          payment_free_money: paymentFreeMoney || null,
+          payment_holder_name: paymentHolderName || null,
+          payment_instructions_extra: paymentInstructionsExtra || null,
         }),
       });
       const json = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(json.error ?? "Erreur enregistrement");
       setBanner({ type: "ok", text: "Paramètres enregistrés." });
+      // Recharge pour réafficher les numéros normalisés+formatés
+      await load();
       router.refresh();
     } catch (e) {
       setBanner({ type: "err", text: e instanceof Error ? e.message : "Erreur" });
@@ -253,6 +284,11 @@ export function SettingsView() {
     }
   }
 
+  const atLeastOnePaymentMethod =
+    paymentOrangeMoney.trim() !== "" ||
+    paymentWave.trim() !== "" ||
+    paymentFreeMoney.trim() !== "";
+
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-sm text-gray-400">
@@ -265,7 +301,7 @@ export function SettingsView() {
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-8 pb-16 md:px-6">
       <PageHeader
         title="Paramètres"
-        description="Compte, entreprise, préférences et sécurité."
+        description="Compte, entreprise, paiement, préférences et sécurité."
       />
 
       {banner ? (
@@ -460,6 +496,103 @@ export function SettingsView() {
             />
           </div>
         </Section>
+
+        {/* ====== NOUVELLE SECTION PAIEMENT (Phase 2) ====== */}
+        <Section
+          title="Paiement"
+          description="Les numéros mobile money où tes clients t'envoient l'argent. Au moins un moyen est requis pour envoyer des devis."
+        >
+          {!atLeastOnePaymentMethod ? (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              ⚠️ Aucun moyen de paiement configuré. Tu ne pourras pas envoyer de devis tant qu'au
+              moins un numéro (OM, Wave ou Free Money) n'est pas renseigné.
+            </div>
+          ) : null}
+
+          <div>
+            <label className={labelClass()} htmlFor="paymentOrangeMoney">
+              Orange Money
+            </label>
+            <input
+              id="paymentOrangeMoney"
+              className={cn(inputClass(), "mt-1.5")}
+              value={paymentOrangeMoney}
+              onChange={(e) => setPaymentOrangeMoney(e.target.value)}
+              placeholder="+221 77 869 63 39"
+              inputMode="tel"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Numéro sur lequel tu reçois tes paiements Orange Money.
+            </p>
+          </div>
+
+          <div>
+            <label className={labelClass()} htmlFor="paymentWave">
+              Wave
+            </label>
+            <input
+              id="paymentWave"
+              className={cn(inputClass(), "mt-1.5")}
+              value={paymentWave}
+              onChange={(e) => setPaymentWave(e.target.value)}
+              placeholder="+221 77 869 63 39"
+              inputMode="tel"
+            />
+            <p className="mt-1 text-xs text-gray-500">Numéro Wave (optionnel).</p>
+          </div>
+
+          <div>
+            <label className={labelClass()} htmlFor="paymentFreeMoney">
+              Free Money
+            </label>
+            <input
+              id="paymentFreeMoney"
+              className={cn(inputClass(), "mt-1.5")}
+              value={paymentFreeMoney}
+              onChange={(e) => setPaymentFreeMoney(e.target.value)}
+              placeholder="+221 76 123 45 67"
+              inputMode="tel"
+            />
+            <p className="mt-1 text-xs text-gray-500">Numéro Free Money (optionnel).</p>
+          </div>
+
+          <div>
+            <label className={labelClass()} htmlFor="paymentHolderName">
+              Nom du titulaire
+            </label>
+            <input
+              id="paymentHolderName"
+              className={cn(inputClass(), "mt-1.5")}
+              value={paymentHolderName}
+              onChange={(e) => setPaymentHolderName(e.target.value)}
+              placeholder="Ex. Jimmy Khater"
+              maxLength={100}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Nom qui apparaît quand le client tape ton numéro dans son app mobile money. Important
+              pour la confiance.
+            </p>
+          </div>
+
+          <div>
+            <label className={labelClass()} htmlFor="paymentInstructionsExtra">
+              Instructions supplémentaires (optionnel)
+            </label>
+            <textarea
+              id="paymentInstructionsExtra"
+              rows={2}
+              className={cn(inputClass(), "mt-1.5 resize-y")}
+              value={paymentInstructionsExtra}
+              onChange={(e) => setPaymentInstructionsExtra(e.target.value)}
+              placeholder="Ex. Envoie-moi un SMS après ton paiement 🙏"
+              maxLength={200}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              {paymentInstructionsExtra.length}/200 — affiché sur la page de paiement du client.
+            </p>
+          </div>
+        </Section>
+        {/* ====== FIN SECTION PAIEMENT ====== */}
 
         <Section title="Préférences" description="Valeurs par défaut pour l’application.">
           <div className="grid gap-4 sm:grid-cols-2">

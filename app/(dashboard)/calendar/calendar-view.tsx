@@ -292,6 +292,11 @@ export function CalendarView({ properties }: { properties: Property[] }) {
             quote_validity_hours: (p.quote_validity_hours as number) ?? null,
             default_language: (p.default_language as string) ?? null,
             default_currency: (p.default_currency as string) ?? null,
+            payment_orange_money: (p.payment_orange_money as string) ?? null,
+            payment_wave: (p.payment_wave as string) ?? null,
+            payment_free_money: (p.payment_free_money as string) ?? null,
+            payment_holder_name: (p.payment_holder_name as string) ?? null,
+            payment_instructions_extra: (p.payment_instructions_extra as string) ?? null,
           });
         } else {
           setProfileWa(null);

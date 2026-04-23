@@ -15,7 +15,7 @@ export default async function EditPropertyPage({ params }: { params: Promise<Par
   const { data, error } = await supabase
     .from("properties")
     .select(
-      "id,name,city,base_price,cleaning_fee,currency,description,internal_name,address,neighborhood,property_type,surface_m2,max_guests,bedrooms,beds,bathrooms,amenities",
+      "id,name,city,base_price,cleaning_fee,currency,description,internal_name,address,neighborhood,property_type,surface_m2,max_guests,bedrooms,beds,bathrooms,amenities,cover_image_url,photos",
     )
     .eq("id", id)
     .eq("user_id", user.id)
@@ -30,6 +30,11 @@ export default async function EditPropertyPage({ params }: { params: Promise<Par
   // amenities peut être un jsonb (array) ou null
   const amenities = Array.isArray(data.amenities)
     ? data.amenities.filter((x): x is string => typeof x === "string")
+    : [];
+
+  // photos peut être un jsonb (array) ou null
+  const photos = Array.isArray(data.photos)
+    ? data.photos.filter((x): x is string => typeof x === "string")
     : [];
 
   return (
@@ -55,6 +60,10 @@ export default async function EditPropertyPage({ params }: { params: Promise<Par
         beds: data.beds,
         bathrooms: data.bathrooms,
         amenities,
+        // Phase 4 Palier 2 : Photos
+        property_id: data.id,
+        cover_image_url: data.cover_image_url,
+        photos,
       }}
     />
   );

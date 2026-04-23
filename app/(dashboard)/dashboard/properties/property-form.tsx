@@ -4,6 +4,7 @@ import { useFormState } from "react-dom";
 import Link from "next/link";
 import { AMENITIES_LIST } from "./property-constants";
 import type { PropertyFormState } from "./actions";
+import { PhotoUploader } from "@/components/photo-uploader";
 
 const initialState: PropertyFormState = { ok: false };
 
@@ -28,6 +29,10 @@ type PropertyFormValues = {
   beds?: number | null;
   bathrooms?: number | null;
   amenities?: string[] | null;
+  // Phase 4 Palier 2 : Photos (uniquement en édition)
+  property_id?: string | null;
+  cover_image_url?: string | null;
+  photos?: string[] | null;
 };
 
 function numToStr(v: number | null | undefined): string {
@@ -79,6 +84,15 @@ export function PropertyForm({
           <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {state.message}
           </div>
+        )}
+        
+{/* SECTION PHOTOS (uniquement en édition, si property_id est présent) */}
+{defaultValues?.property_id && (
+          <PhotoUploader
+            propertyId={defaultValues.property_id}
+            initialCoverUrl={defaultValues.cover_image_url ?? null}
+            initialPhotos={defaultValues.photos ?? []}
+          />
         )}
 
         {/* SECTION 1 : Aperçu */}

@@ -7,8 +7,15 @@ import { releaseQuoteHold } from "@/lib/quotes/hold-calendar";
 const STATUSES = ["draft", "sent", "accepted", "refused", "expired"] as const;
 type QuoteStatus = (typeof STATUSES)[number];
 
+const PAYMENT_METHODS = ["orange_money", "wave", "free_money", "other"] as const;
+type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
 function isQuoteStatus(s: string): s is QuoteStatus {
   return (STATUSES as readonly string[]).includes(s);
+}
+
+function isPaymentMethod(s: string): s is PaymentMethod {
+  return (PAYMENT_METHODS as readonly string[]).includes(s);
 }
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -20,7 +27,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const { data, error } = await supabase
     .from("quotes")
     .select(
-      "id,property_id,customer_id,policy_id,check_in,check_out,guests,total,wa_message,status,expires_at,created_at",
+      "id,property_id,customer_id,policy_id,check_in,check_out,guests,total,wa_message,status,expires_at,created_at,payment_reference,payment_confirmed_at,payment_method_used",
     )
     .eq("id", id)
     .eq("user_id", userData.user.id)
@@ -57,6 +64,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const checkOut = String(row.check_out);
   const guests = Number(row.guests ?? 1);
   const total = Number(row.total ?? 0);
+  const paymentReference = row.payment_reference != null ? String(row.payment_reference) : null;
   const waStored = row.wa_message != null ? String(row.wa_message) : "";
   const waMessage =
     waStored.trim() ||
@@ -68,6 +76,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       guests,
       total,
       propertyCurrency: property?.currency ?? "XOF",
+      paymentReference,
     });
 
   const quote = {
@@ -83,6 +92,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     status: String(row.status),
     expires_at: String(row.expires_at),
     created_at: String(row.created_at),
+    payment_reference: paymentReference,
+    payment_confirmed_at: row.payment_confirmed_at != null ? String(row.payment_confirmed_at) : null,
+    payment_method_used: row.payment_method_used != null ? String(row.payment_method_used) : null,
     nights: nightsBetween(checkIn, checkOut),
     property: property ? { name: property.name ?? "", currency: property.currency ?? "XOF" } : null,
     customer: customer
@@ -96,6 +108,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 type PatchBody = {
   status?: string;
   wa_message?: string | null;
+  action?: "confirm_payment";
+  paymentMethod?: string;
 };
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -105,6 +119,70 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     body = (await req.json()) as PatchBody;
   } catch {
     return NextResponse.json({ error: "JSON invalide." }, { status: 400 });
+  }
+
+  const supabase = createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = userData.user.id;
+
+  if (body.action === "confirm_payment") {
+    const method = String(body.paymentMethod ?? "").trim();
+    if (!isPaymentMethod(method)) {
+      return NextResponse.json(
+        { error: "Moyen de paiement invalide. Valeurs: orange_money, wave, free_money, other." },
+        { status: 400 },
+      );
+    }
+
+    const { data: current, error: fetchErr } = await supabase
+      .from("quotes")
+      .select("id,status,payment_confirmed_at")
+      .eq("id", id)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    if (!current) return NextResponse.json({ error: "Devis introuvable." }, { status: 404 });
+
+    if (current.payment_confirmed_at != null) {
+      return NextResponse.json({
+        ok: true,
+        alreadyConfirmed: true,
+        message: "Ce devis a déjà été marqué comme payé.",
+      });
+    }
+
+    if (current.status !== "sent" && current.status !== "draft") {
+      return NextResponse.json(
+        {
+          error: `Impossible de confirmer un paiement sur un devis au statut "${current.status}".`,
+        },
+        { status: 400 },
+      );
+    }
+
+    const nowIso = new Date().toISOString();
+
+    const { error: updateErr } = await supabase
+      .from("quotes")
+      .update({
+        status: "accepted",
+        payment_confirmed_at: nowIso,
+        payment_confirmed_by: userId,
+        payment_method_used: method,
+        updated_at: nowIso,
+      })
+      .eq("id", id)
+      .eq("user_id", userId);
+
+    if (updateErr) {
+      return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    }
+
+    await releaseQuoteHold(supabase, id);
+
+    return NextResponse.json({ ok: true });
   }
 
   const patch: Record<string, unknown> = {};
@@ -124,20 +202,14 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
   patch.updated_at = new Date().toISOString();
 
-  const supabase = createClient();
-  const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const { error } = await supabase
     .from("quotes")
     .update(patch as never)
     .eq("id", id)
-    .eq("user_id", userData.user.id);
+    .eq("user_id", userId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Si le devis passe à accepted/refused/expired, on libère le hold
-  // (la chambre redevient disponible, ou une vraie réservation prendra le relais)
   const newStatus = body.status;
   if (newStatus === "accepted" || newStatus === "refused" || newStatus === "expired") {
     await releaseQuoteHold(supabase, id);
@@ -152,8 +224,6 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Libérer le hold avant de supprimer le devis
-  // (ordre important : on ne peut plus retrouver le hold après la suppression du quote)
   await releaseQuoteHold(supabase, id);
 
   const { error } = await supabase.from("quotes").delete().eq("id", id).eq("user_id", userData.user.id);

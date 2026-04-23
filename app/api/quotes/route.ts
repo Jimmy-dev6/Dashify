@@ -9,7 +9,11 @@ import {
   incrementPromotionUses,
 } from "@/lib/pricing/full-quote-pricing";
 import { computeQuotePreviewForProperty } from "@/lib/pricing/quote-server";
-import { buildWaFromProfile, fetchProfileQuoteContext } from "@/lib/quotes/profile-wa";
+import {
+  buildWaFromProfile,
+  fetchProfileQuoteContext,
+  profileHasAnyPaymentMethod,
+} from "@/lib/quotes/profile-wa";
 import { clampQuoteValidityHours, nightsBetween } from "@/lib/quotes/wa-message";
 
 type Body = {
@@ -51,6 +55,7 @@ type QuoteRowRaw = {
   status: string;
   expires_at: string;
   created_at: string;
+  payment_reference: string | null;
 };
 
 export async function GET(req: Request) {
@@ -62,7 +67,6 @@ export async function GET(req: Request) {
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Lazy expiration : nettoie les devis périmés avant de renvoyer la liste
   await expireOverdueQuotes(supabase, userData.user.id);
 
   const profileCtx = await fetchProfileQuoteContext(supabase, userData.user.id);
@@ -70,7 +74,7 @@ export async function GET(req: Request) {
   const { data: rows, error } = await supabase
     .from("quotes")
     .select(
-      "id,property_id,customer_id,policy_id,check_in,check_out,guests,total,wa_message,status,expires_at,created_at",
+      "id,property_id,customer_id,policy_id,check_in,check_out,guests,total,wa_message,status,expires_at,created_at,payment_reference",
     )
     .eq("user_id", userData.user.id)
     .order("created_at", { ascending: false });
@@ -145,6 +149,7 @@ export async function GET(req: Request) {
         guests: Number(q.guests ?? 1),
         total: Number(q.total ?? 0),
         propertyCurrency: property?.currency ?? "XOF",
+        paymentReference: q.payment_reference,
       });
     return {
       id: q.id,
@@ -159,6 +164,7 @@ export async function GET(req: Request) {
       status: q.status,
       expires_at: q.expires_at,
       created_at: q.created_at,
+      payment_reference: q.payment_reference,
       nights,
       property: property ? { name: property.name, currency: property.currency ?? "XOF" } : null,
       customer: customer ? { name: customer.name, phone: customer.phone } : null,
@@ -207,7 +213,7 @@ export async function POST(req: Request) {
 
   if (checkIn >= checkOut) {
     return NextResponse.json(
-      { error: "La date de départ doit être après la date d’arrivée." },
+      { error: "La date de départ doit être après la date d'arrivée." },
       { status: 400 },
     );
   }
@@ -235,6 +241,17 @@ export async function POST(req: Request) {
   }
 
   const profileCtx = await fetchProfileQuoteContext(supabase, user.id);
+
+  if (!profileHasAnyPaymentMethod(profileCtx)) {
+    return NextResponse.json(
+      {
+        error:
+          "Configure au moins un moyen de paiement (Orange Money, Wave ou Free Money) dans Paramètres avant de créer un devis.",
+        code: "NO_PAYMENT_METHOD",
+      },
+      { status: 400 },
+    );
+  }
 
   const propertyName = String(propRow.name ?? "");
   const propertyCurrency = (propRow.currency as string | null) ?? "XOF";
@@ -357,6 +374,35 @@ export async function POST(req: Request) {
     : clampQuoteValidityHours(profileCtx?.quote_validity_hours);
   const expiresAt = new Date(Date.now() + validityH * 60 * 60 * 1000).toISOString();
 
+  const insertRow: Record<string, unknown> = {
+    user_id: user.id,
+    property_id: propertyId,
+    customer_id: customerId,
+    policy_id: policyRow?.id ?? null,
+    check_in: checkIn,
+    check_out: checkOut,
+    guests,
+    total: finalTotal,
+    wa_message: "",
+    status: "draft",
+    expires_at: expiresAt,
+    promotion_id: fullPrice.data.promotion?.id ?? null,
+    promo_discount: fullPrice.data.promotion?.discountAmount ?? 0,
+    supplement_ids: supplementIds,
+    pricing_extras: fullPrice.data.pricingExtras,
+  };
+
+  const { data: quote, error } = await supabase
+    .from("quotes")
+    .insert(insertRow)
+    .select("id,payment_reference")
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  const paymentReference = (quote as { payment_reference?: string | null })?.payment_reference ?? null;
   const waMessage =
     (!useDynamic && body.waMessage != null && String(body.waMessage).trim()) ||
     buildWaFromProfile(profileCtx, {
@@ -370,37 +416,20 @@ export async function POST(req: Request) {
       quoteValidityHours: validityH,
       policyConditionsBlock: conditionsBlock || null,
       pricingExtrasLines,
+      paymentReference,
     });
 
-  const insertRow: Record<string, unknown> = {
-    user_id: user.id,
-    property_id: propertyId,
-    customer_id: customerId,
-    policy_id: policyRow?.id ?? null,
-    check_in: checkIn,
-    check_out: checkOut,
-    guests,
-    total: finalTotal,
-    wa_message: waMessage,
-    status: "draft",
-    expires_at: expiresAt,
-    promotion_id: fullPrice.data.promotion?.id ?? null,
-    promo_discount: fullPrice.data.promotion?.discountAmount ?? 0,
-    supplement_ids: supplementIds,
-    pricing_extras: fullPrice.data.pricingExtras,
-  };
-
-  const { data: quote, error } = await supabase.from("quotes").insert(insertRow).select("id").single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (quote?.id) {
+    await supabase
+      .from("quotes")
+      .update({ wa_message: waMessage })
+      .eq("id", quote.id as string);
   }
 
   if (fullPrice.data.promotion?.id) {
     void incrementPromotionUses(supabase, user.id, fullPrice.data.promotion.id);
   }
 
-  // Créer le blocage calendrier pour ce devis (dates bloquées pendant sa validité)
   if (quote?.id) {
     await createQuoteHold(supabase, {
       quoteId: quote.id as string,

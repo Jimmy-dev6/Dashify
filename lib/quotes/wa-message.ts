@@ -42,6 +42,88 @@ export function clampQuoteValidityHours(h: number | null | undefined) {
   return 48;
 }
 
+/**
+ * Formatte un numero mobile money sénégalais (9 chiffres commençant par 7)
+ * vers un affichage international lisible.
+ */
+function formatMobileMoneyDisplay(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const digits = String(raw).replace(/\D/g, "");
+  if (digits.length === 9 && digits.startsWith("7")) {
+    return `+221 ${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 7)} ${digits.slice(7, 9)}`;
+  }
+  return String(raw);
+}
+
+/**
+ * Construit le bloc paiement dans le message WhatsApp.
+ * Retourne une chaine vide si aucun moyen de paiement n'est configuré.
+ */
+export function buildPaymentBlock(params: {
+  lang: "fr" | "en";
+  paymentReference: string | null;
+  paymentUrl: string | null;
+  paymentOrangeMoney: string | null;
+  paymentWave: string | null;
+  paymentFreeMoney: string | null;
+  paymentHolderName: string | null;
+  paymentInstructionsExtra: string | null;
+}): string {
+  const hasAny =
+    params.paymentOrangeMoney || params.paymentWave || params.paymentFreeMoney;
+  if (!hasAny) return "";
+
+  const lines: string[] = [];
+  const lang = params.lang;
+
+  // Titre
+  lines.push("");
+  lines.push(lang === "en" ? "💳 Pay online:" : "💳 Paiement en ligne :");
+
+  // Lien vers la page de paiement Dashify
+  if (params.paymentUrl) {
+    lines.push(params.paymentUrl);
+  }
+
+  // Séparateur
+  lines.push("");
+  lines.push(lang === "en" ? "Or directly to:" : "Ou directement sur :");
+
+  if (params.paymentOrangeMoney) {
+    lines.push(`🟠 Orange Money : ${formatMobileMoneyDisplay(params.paymentOrangeMoney)}`);
+  }
+  if (params.paymentWave) {
+    lines.push(`🌊 Wave : ${formatMobileMoneyDisplay(params.paymentWave)}`);
+  }
+  if (params.paymentFreeMoney) {
+    lines.push(`🔴 Free Money : ${formatMobileMoneyDisplay(params.paymentFreeMoney)}`);
+  }
+
+  const holder = (params.paymentHolderName ?? "").trim();
+  if (holder) {
+    lines.push(lang === "en" ? `Account holder: ${holder}` : `Au nom de : ${holder}`);
+  }
+
+  // Référence
+  if (params.paymentReference) {
+    lines.push("");
+    lines.push(
+      lang === "en"
+        ? `⚠️ Reference to mention: ${params.paymentReference}`
+        : `⚠️ Référence à mentionner : ${params.paymentReference}`,
+    );
+  }
+
+  // Instructions extra
+  const extra = (params.paymentInstructionsExtra ?? "").trim();
+  if (extra) {
+    lines.push("");
+    lines.push(extra);
+  }
+
+  return lines.join("\n");
+}
+
 export function buildQuoteWhatsAppMessage(params: {
   customerName: string;
   propertyName: string;
@@ -62,6 +144,16 @@ export function buildQuoteWhatsAppMessage(params: {
   policyConditionsBlock?: string | null;
   /** Lignes supplémentaires (frais, suppléments, promo) insérées après le total, avant la validité. */
   pricingExtrasLines?: string[] | null;
+  /** Référence unique du devis (ex: DSHF-XXXXXXXX), générée à l'INSERT. */
+  paymentReference?: string | null;
+  /** URL complète vers la page publique de paiement (ex: https://dashify-plum.vercel.app/pay/DSHF-XXXX). */
+  paymentUrl?: string | null;
+  /** Numéro mobile money de l'hôte (9 chiffres format 7XXXXXXXX) ou null. */
+  paymentOrangeMoney?: string | null;
+  paymentWave?: string | null;
+  paymentFreeMoney?: string | null;
+  paymentHolderName?: string | null;
+  paymentInstructionsExtra?: string | null;
 }) {
   const nights = nightsBetween(params.checkIn, params.checkOut);
   const cur = (params.currency ?? "XOF").trim() || "XOF";
@@ -103,6 +195,21 @@ export function buildQuoteWhatsAppMessage(params: {
     lines.push(
       lang === "en" ? `📋 Terms: ${policyBlock}` : `📋 Conditions : ${policyBlock}`,
     );
+  }
+
+  // Bloc paiement (Phase 2 Palier 4)
+  const paymentBlock = buildPaymentBlock({
+    lang,
+    paymentReference: params.paymentReference ?? null,
+    paymentUrl: params.paymentUrl ?? null,
+    paymentOrangeMoney: params.paymentOrangeMoney ?? null,
+    paymentWave: params.paymentWave ?? null,
+    paymentFreeMoney: params.paymentFreeMoney ?? null,
+    paymentHolderName: params.paymentHolderName ?? null,
+    paymentInstructionsExtra: params.paymentInstructionsExtra ?? null,
+  });
+  if (paymentBlock) {
+    lines.push(paymentBlock);
   }
 
   const company = (params.companyName ?? "").trim();

@@ -8,6 +8,7 @@ import {
   PlusIcon,
   TrashIcon,
   XMarkIcon,
+  CheckBadgeIcon,
 } from "@heroicons/react/24/outline";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { formatPolicyConditionsBlock, policyFromRow } from "@/lib/policies/format-wa";
@@ -38,6 +39,9 @@ export type QuoteListItem = {
   expires_at: string;
   created_at: string;
   nights: number;
+  payment_reference?: string | null;
+  payment_confirmed_at?: string | null;
+  payment_method_used?: string | null;
   property: { name: string; currency: string } | null;
   customer: { name: string; phone: string } | null;
 };
@@ -107,6 +111,15 @@ function quoteStatusLabel(status: string) {
   return status;
 }
 
+function paymentMethodLabel(method: string | null | undefined): string {
+  if (!method) return "";
+  if (method === "orange_money") return "Orange Money";
+  if (method === "wave") return "Wave";
+  if (method === "free_money") return "Free Money";
+  if (method === "other") return "Autre";
+  return method;
+}
+
 export function QuotesView({
   properties,
   initialQuoteId,
@@ -133,6 +146,30 @@ export function QuotesView({
     phone: string;
   } | null>(null);
   const urlQuoteLoaded = useRef(false);
+
+  const [hasPaymentMethod, setHasPaymentMethod] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/profile");
+        const json = (await res.json()) as { profile?: Record<string, unknown> };
+        if (!res.ok || cancelled || !json.profile) return;
+        const p = json.profile;
+        const any =
+          Boolean(p.payment_orange_money) ||
+          Boolean(p.payment_wave) ||
+          Boolean(p.payment_free_money);
+        setHasPaymentMethod(any);
+      } catch {
+        if (!cancelled) setHasPaymentMethod(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -310,6 +347,8 @@ export function QuotesView({
     [load],
   );
 
+  const canCreateQuote = properties.length > 0 && hasPaymentMethod === true;
+
   return (
     <div>
       <PageHeader
@@ -319,7 +358,12 @@ export function QuotesView({
           <button
             type="button"
             onClick={() => setNewOpen(true)}
-            disabled={properties.length === 0}
+            disabled={!canCreateQuote}
+            title={
+              hasPaymentMethod === false
+                ? "Configure d'abord un moyen de paiement dans Paramètres"
+                : undefined
+            }
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-black shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <PlusIcon className="h-5 w-5" />
@@ -335,6 +379,29 @@ export function QuotesView({
             Logements
           </Link>{" "}
           pour créer des devis.
+        </div>
+      )}
+
+      {properties.length > 0 && hasPaymentMethod === false && (
+        <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          <div className="flex items-start gap-2">
+            <span className="text-lg leading-none" aria-hidden>
+              ⚠️
+            </span>
+            <div>
+              <p className="font-semibold">Configure un moyen de paiement pour créer des devis</p>
+              <p className="mt-1 text-xs text-amber-100/90">
+                Ajoute ton numéro Orange Money, Wave ou Free Money dans{" "}
+                <Link
+                  href="/dashboard/settings"
+                  className="font-semibold text-teal-300 underline hover:text-teal-200"
+                >
+                  Paramètres &gt; Paiement
+                </Link>{" "}
+                pour pouvoir envoyer des devis à tes clients.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -417,12 +484,12 @@ export function QuotesView({
         <div className="flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-gray-700 bg-gray-900/30 p-10 text-center">
           <p className="text-sm font-medium text-gray-200">Aucun devis</p>
           <p className="mt-2 max-w-md text-sm text-gray-400">
-            Aucun devis ne correspond à ces filtres. Créez un premier devis pour le suivre ici.
+            Aucun devis ne correspond à ces filtres. Crée un premier devis pour le suivre ici.
           </p>
           <button
             type="button"
             onClick={() => setNewOpen(true)}
-            disabled={properties.length === 0}
+            disabled={!canCreateQuote}
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-black hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <PlusIcon className="h-5 w-5" />
@@ -573,9 +640,7 @@ function NewQuoteModal({
   const [customerQuery, setCustomerQuery] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerPhone, setCustomerPhone] = useState("");
-  const [customerResults, setCustomerResults] = useState<
-    { id: string; name: string; phone: string }[]
-  >([]);
+  const [customerResults, setCustomerResults] = useState<{ id: string; name: string; phone: string }[]>([]);
   const [customerLoading, setCustomerLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -593,9 +658,7 @@ function NewQuoteModal({
   const [policies, setPolicies] = useState<PolicyRow[]>([]);
   const [policyId, setPolicyId] = useState("");
   const [promoCode, setPromoCode] = useState("");
-  const [supplementCatalog, setSupplementCatalog] = useState<
-    { id: string; name: string; is_optional: boolean; price: number; price_type: string }[]
-  >([]);
+  const [supplementCatalog, setSupplementCatalog] = useState<{ id: string; name: string; is_optional: boolean; price: number; price_type: string }[]>([]);
   const [supplementPick, setSupplementPick] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -642,6 +705,11 @@ function NewQuoteModal({
           quote_validity_hours: (p.quote_validity_hours as number) ?? null,
           default_language: (p.default_language as string) ?? null,
           default_currency: (p.default_currency as string) ?? null,
+          payment_orange_money: (p.payment_orange_money as string) ?? null,
+          payment_wave: (p.payment_wave as string) ?? null,
+          payment_free_money: (p.payment_free_money as string) ?? null,
+          payment_holder_name: (p.payment_holder_name as string) ?? null,
+          payment_instructions_extra: (p.payment_instructions_extra as string) ?? null,
         });
       } catch {
         if (!cancelled) setProfileWa(null);
@@ -772,6 +840,7 @@ function NewQuoteModal({
       quoteValidityHours: selectedPolicy?.quote_expiry_hours ?? null,
       policyConditionsBlock: conditionsBlock,
       pricingExtrasLines,
+      paymentReference: "DSHF-PREVIEW",
     });
   }, [
     property,
@@ -856,7 +925,7 @@ function NewQuoteModal({
             .map(([k]) => k),
         }),
       });
-      const json = (await res.json()) as { ok?: boolean; id?: string; error?: string };
+      const json = (await res.json()) as { ok?: boolean; id?: string; error?: string; code?: string };
       if (res.status === 409) {
         setAvailabilityNote(json.error ?? "Dates indisponibles.");
         setFormError(json.error ?? "Conflit de disponibilité.");
@@ -990,7 +1059,7 @@ function NewQuoteModal({
             </select>
             {policies.length === 0 && (
               <span className="text-[11px] font-normal text-gray-500">
-                Créez une politique dans{" "}
+                Crée une politique dans{" "}
                 <Link href="/dashboard/policies" className="text-teal-400 underline">
                   Politiques
                 </Link>
@@ -1086,7 +1155,7 @@ function NewQuoteModal({
             <input
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
-              placeholder="Téléphone (+225… si nouveau client)"
+              placeholder="Téléphone (+221… si nouveau client)"
               className="h-10 rounded-lg border border-gray-800 bg-gray-950 px-3 text-sm text-white outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
             />
           </div>
@@ -1114,7 +1183,10 @@ function NewQuoteModal({
 
           {waPreview && (
             <div className="grid gap-1.5">
-              <div className="text-xs font-medium text-gray-400">Aperçu WhatsApp</div>
+              <div className="text-xs font-medium text-gray-400">
+                Aperçu WhatsApp{" "}
+                <span className="font-normal text-gray-500">(lien réel généré à la création)</span>
+              </div>
               <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border border-gray-800 bg-gray-950 p-3 text-xs leading-relaxed text-gray-300">
                 {waPreview}
               </pre>
@@ -1171,6 +1243,7 @@ function QuoteSidePanel({
   const [patching, setPatching] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const cur = quote.property?.currency ?? "XOF";
 
   async function patchStatus(status: "accepted" | "refused") {
@@ -1264,6 +1337,7 @@ function QuoteSidePanel({
   }
 
   const canWa = quote.status === "draft" || quote.status === "sent";
+  const canMarkPaid = quote.status === "sent" || quote.status === "draft";
 
   return (
     <>
@@ -1317,12 +1391,30 @@ function QuoteSidePanel({
             <div className="text-xs text-gray-500">Total</div>
             <div className="mt-1 text-lg font-semibold text-teal-200">{money(quote.total, cur)}</div>
           </div>
+          {quote.payment_reference && (
+            <div>
+              <div className="text-xs text-gray-500">Référence paiement</div>
+              <div className="mt-1 font-mono text-sm text-teal-200">{quote.payment_reference}</div>
+            </div>
+          )}
           <div>
             <div className="text-xs text-gray-500">Expire</div>
             <div className="mt-1 text-gray-300">
               {quote.expires_at ? new Date(quote.expires_at).toLocaleString("fr-FR") : "—"}
             </div>
           </div>
+          {quote.payment_confirmed_at && (
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-200">
+                <CheckBadgeIcon className="h-4 w-4" />
+                Paiement confirmé
+              </div>
+              <p className="mt-1 text-xs text-emerald-100/80">
+                {new Date(quote.payment_confirmed_at).toLocaleString("fr-FR")}
+                {quote.payment_method_used ? ` · ${paymentMethodLabel(quote.payment_method_used)}` : ""}
+              </p>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             <span
               className={cn(
@@ -1352,7 +1444,18 @@ function QuoteSidePanel({
               Envoyer sur WhatsApp
             </button>
           )}
-          {quote.status !== "accepted" && quote.status !== "refused" && (
+          {canMarkPaid && !quote.payment_confirmed_at && (
+            <button
+              type="button"
+              onClick={() => setPaymentModalOpen(true)}
+              disabled={patching || converting}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+            >
+              <CheckBadgeIcon className="h-5 w-5" />
+              J&apos;ai reçu le paiement
+            </button>
+          )}
+          {quote.status !== "accepted" && quote.status !== "refused" && !quote.payment_confirmed_at && (
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -1393,6 +1496,173 @@ function QuoteSidePanel({
           </button>
         </div>
       </aside>
+
+      {paymentModalOpen && (
+        <ConfirmPaymentModal
+          quoteId={quote.id}
+          total={quote.total}
+          currency={cur}
+          customerName={quote.customer?.name ?? ""}
+          onClose={() => setPaymentModalOpen(false)}
+          onConfirmed={async () => {
+            setPaymentModalOpen(false);
+            await onUpdated();
+            try {
+              const res = await fetch("/api/bookings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fromAcceptedQuote: true, quoteId: quote.id }),
+              });
+              const json = (await res.json()) as { ok?: boolean; error?: string };
+              if (!res.ok || !json.ok) {
+                alert(
+                  `Paiement confirmé, mais la réservation n'a pas pu être créée automatiquement : ${json.error ?? "erreur inconnue"}. Vas dans Devis pour réessayer.`,
+                );
+                return;
+              }
+              router.push("/dashboard/bookings");
+              router.refresh();
+            } catch (e) {
+              alert(
+                `Paiement confirmé, mais erreur lors de la création de la réservation : ${e instanceof Error ? e.message : String(e)}`,
+              );
+            }
+          }}
+        />
+      )}
     </>
+  );
+}
+
+function ConfirmPaymentModal({
+  quoteId,
+  total,
+  currency,
+  customerName,
+  onClose,
+  onConfirmed,
+}: {
+  quoteId: string;
+  total: number;
+  currency: string;
+  customerName: string;
+  onClose: () => void;
+  onConfirmed: () => void | Promise<void>;
+}) {
+  const [method, setMethod] = useState<"orange_money" | "wave" | "free_money" | "other">("orange_money");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function confirm() {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/quotes/${quoteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "confirm_payment", paymentMethod: method }),
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) throw new Error(json.error ?? "Confirmation impossible.");
+      await onConfirmed();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+      <button type="button" className="absolute inset-0 cursor-default" aria-label="Fermer" onClick={onClose} />
+      <div
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-emerald-500/30 bg-gray-900 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <CheckBadgeIcon className="h-5 w-5 text-emerald-400" />
+            <h2 className="text-base font-semibold text-white">Confirmer le paiement</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-gray-800 p-1.5 text-gray-300 hover:bg-gray-800"
+          >
+            <XMarkIcon className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-4 p-5">
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-sm">
+            <p className="text-gray-300">
+              Tu vas confirmer avoir reçu <span className="font-semibold text-emerald-200">{money(total, currency)}</span>{" "}
+              {customerName ? (
+                <>
+                  de la part de <span className="font-semibold text-white">{customerName}</span>
+                </>
+              ) : null}
+              .
+            </p>
+            <p className="mt-1 text-xs text-gray-400">
+              Le devis passera en <strong>Accepté</strong> et la réservation sera créée automatiquement.
+            </p>
+          </div>
+
+          <div className="grid gap-1.5">
+            <div className="text-xs font-medium text-gray-400">Moyen de paiement reçu</div>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { v: "orange_money", label: "🟠 Orange Money" },
+                  { v: "wave", label: "🌊 Wave" },
+                  { v: "free_money", label: "🔴 Free Money" },
+                  { v: "other", label: "Autre" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.v}
+                  type="button"
+                  onClick={() => setMethod(opt.v)}
+                  className={cn(
+                    "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                    method === opt.v
+                      ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-100"
+                      : "border-gray-700 bg-gray-950 text-gray-300 hover:bg-gray-800",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+              {error}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={submitting}
+              className="flex-1 rounded-lg border border-gray-700 bg-gray-900 py-2.5 text-sm font-medium text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              onClick={() => void confirm()}
+              disabled={submitting}
+              className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+            >
+              {submitting ? "Confirmation…" : "Confirmer le paiement"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

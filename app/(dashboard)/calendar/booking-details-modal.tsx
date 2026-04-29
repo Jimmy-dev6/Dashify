@@ -38,7 +38,6 @@ type BookingDetails = {
     payment_reference: string | null;
     payment_method_used: string | null;
     payment_confirmed_at: string | null;
-    payment_holder_name: string | null;
     sent_at: string | null;
   } | null;
 };
@@ -214,7 +213,7 @@ export function BookingDetailsModal(props: Props) {
       });
       const json = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !json.ok) {
-        throw new Error(json.error ?? "Erreur lors de l'annulation.");
+        throw new Error(json.error ?? "Erreur lors de l''annulation.");
       }
       if (onCancelled) onCancelled();
       onClose();
@@ -256,11 +255,11 @@ export function BookingDetailsModal(props: Props) {
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-800 bg-gray-900/95 px-5 py-4 backdrop-blur">
           <div>
             <div id="booking-details-title" className="text-base font-semibold text-white">
-              Details de la reservation
+              Détails de la réservation
             </div>
             {booking ? (
               <div className="text-xs text-gray-400">
-                {booking.nights} nuit{booking.nights > 1 ? "s" : ""} - {booking.guests} voyageur{booking.guests > 1 ? "s" : ""}
+                {booking.nights} nuit{booking.nights > 1 ? "s" : ""} · {booking.guests} voyageur{booking.guests > 1 ? "s" : ""}
               </div>
             ) : null}
           </div>
@@ -317,7 +316,7 @@ export function BookingDetailsModal(props: Props) {
                 <div className="mt-1 text-base font-semibold text-white">{customer.name}</div>
                 {customer.phone ? (
                   <div className="mt-2 text-xs">
-                    <span className="text-gray-500">Tel. </span>
+                    <span className="text-gray-500">Tél. </span>
                     <span className="text-gray-200">{customer.phone}</span>
                   </div>
                 ) : null}
@@ -331,7 +330,7 @@ export function BookingDetailsModal(props: Props) {
             ) : null}
 
             <div className="rounded-xl border border-gray-800 bg-gray-950/40 p-4">
-              <div className="text-xs font-medium text-gray-500">Sejour</div>
+              <div className="text-xs font-medium text-gray-500">Séjour</div>
               <div className="mt-2 grid grid-cols-2 gap-3">
                 <div>
                   <div className="text-[11px] font-medium text-gray-500">Check-in</div>
@@ -344,7 +343,7 @@ export function BookingDetailsModal(props: Props) {
               </div>
               <div className="mt-3 flex items-center justify-between border-t border-gray-800 pt-3">
                 <div className="text-xs text-gray-400">
-                  {booking.nights} nuit{booking.nights > 1 ? "s" : ""} - {booking.guests} voyageur{booking.guests > 1 ? "s" : ""}
+                  {booking.nights} nuit{booking.nights > 1 ? "s" : ""} · {booking.guests} voyageur{booking.guests > 1 ? "s" : ""}
                 </div>
                 <span
                   className={"inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold " + sourceBadge(booking.source).className}
@@ -364,13 +363,13 @@ export function BookingDetailsModal(props: Props) {
                 <div className="mt-3 grid gap-2 border-t border-teal-500/15 pt-3 text-xs">
                   {quote.payment_method_used ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Methode</span>
+                      <span className="text-gray-500">Méthode</span>
                       <span className="text-gray-200">{paymentMethodLabel(quote.payment_method_used)}</span>
                     </div>
                   ) : null}
                   {quote.payment_confirmed_at ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Confirme le</span>
+                      <span className="text-gray-500">Confirmé le</span>
                       <span className="inline-flex items-center gap-1 text-gray-200">
                         <CheckBadgeIcon className="h-4 w-4 text-teal-400" />
                         {formatDateTime(quote.payment_confirmed_at)}
@@ -379,7 +378,7 @@ export function BookingDetailsModal(props: Props) {
                   ) : null}
                   {quote.payment_reference ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Reference</span>
+                      <span className="text-gray-500">Référence</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -387,18 +386,18 @@ export function BookingDetailsModal(props: Props) {
                           if (ref) void copyReference(ref);
                         }}
                         className="inline-flex items-center gap-1.5 rounded-md border border-teal-500/20 bg-teal-500/5 px-2 py-1 font-mono text-[11px] font-semibold text-teal-200 hover:bg-teal-500/10"
-                        title="Copier la reference"
+                        title="Copier la référence"
                       >
                         {quote.payment_reference}
                         <ClipboardDocumentIcon className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   ) : null}
-                  {refCopied ? <div className="text-[11px] text-teal-300">Reference copiee</div> : null}
+                  {refCopied ? <div className="text-[11px] text-teal-300">Référence copiée</div> : null}
                 </div>
               ) : (
                 <div className="mt-3 border-t border-teal-500/15 pt-3 text-xs text-gray-500">
-                  Pas de devis Dashify lie a cette reservation.
+                  Pas de devis Dashify lié à cette réservation.
                 </div>
               )}
             </div>
@@ -431,13 +430,13 @@ export function BookingDetailsModal(props: Props) {
                       onClick={() => setConfirmCancel(true)}
                       className="inline-flex w-full items-center justify-center rounded-lg border border-red-500/30 bg-red-500/5 px-4 py-2.5 text-sm font-semibold text-red-300 hover:bg-red-500/10"
                     >
-                      Annuler la reservation
+                      Annuler la réservation
                     </button>
                   ) : (
                     <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
                       <p className="text-sm font-semibold text-red-200">Confirmer l&apos;annulation ?</p>
                       <p className="mt-1 text-xs text-red-300/80">
-                        Les dates seront liberees dans le calendrier. Cette action peut etre inversee en remettant le statut a confirme via Supabase.
+                        Les dates seront libérées dans le calendrier. Cette action peut être inversée en remettant le statut à confirmé via Supabase.
                       </p>
                       {cancelError ? <p className="mt-2 text-xs text-red-200">{cancelError}</p> : null}
                       <div className="mt-3 flex gap-2">
@@ -468,7 +467,7 @@ export function BookingDetailsModal(props: Props) {
 
               {booking.status === "cancelled" ? (
                 <div className="rounded-lg border border-gray-700 bg-gray-950/40 px-4 py-2.5 text-center text-xs text-gray-500">
-                  Cette reservation est annulee
+                  Cette réservation est annulée
                 </div>
               ) : null}
             </div>

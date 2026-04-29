@@ -99,16 +99,13 @@ export async function GET(
     payment_reference: string | null;
     payment_method_used: string | null;
     payment_confirmed_at: string | null;
-    payment_holder_name: string | null;
     sent_at: string | null;
   } | null = null;
 
   if (booking.customer_id) {
     const { data: quoteData, error: quoteError } = await supabase
       .from("quotes")
-      .select(
-        "id, payment_reference, payment_method_used, payment_confirmed_at, payment_holder_name, sent_at, customer_id, property_id, check_in, check_out, status, created_at",
-      )
+      .select("id, payment_reference, payment_method_used, payment_confirmed_at, sent_at")
       .eq("customer_id", booking.customer_id)
       .eq("property_id", booking.property_id)
       .eq("check_in", booking.check_in)
@@ -126,7 +123,6 @@ export async function GET(
         payment_reference: quoteData.payment_reference ?? null,
         payment_method_used: quoteData.payment_method_used ?? null,
         payment_confirmed_at: quoteData.payment_confirmed_at ?? null,
-        payment_holder_name: quoteData.payment_holder_name ?? null,
         sent_at: quoteData.sent_at ?? null,
       };
     }

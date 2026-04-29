@@ -12,6 +12,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import type { DailyPreviewDay, DayColorTier } from "@/lib/pricing/types";
+import { BookingDetailsModal } from "./booking-details-modal";
 
 type Property = {
   id: string;
@@ -26,8 +27,12 @@ type CalendarEvent = {
   property_id: string;
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD (exclusive)
-  source: "airbnb" | "booking" | "dashify" | "other";
-  status: "confirmed" | "cancelled";
+  source: "airbnb" | "booking" | "dashify" | "other" | "quote_hold";
+  status: "confirmed" | "cancelled" | "pending";
+  external_uid: string | null;
+  booking_id: string | null;
+  quote_id: string | null;
+  customer_name: string | null;
 };
 
 type Customer = { id: string; name: string; phone: string };
@@ -212,6 +217,7 @@ export function CalendarView({ properties }: { properties: Property[] }) {
   const [selectionStart, setSelectionStart] = useState<string | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
 
   const [guests, setGuests] = useState(2);
   const [customerQuery, setCustomerQuery] = useState("");
@@ -632,16 +638,23 @@ export function CalendarView({ properties }: { properties: Property[] }) {
       endCol: number; // 1..7 inclusive
       source: CalendarEvent["source"];
       lane: number;
+      bookingId: string | null;
+      customerName: string | null;
     };
 
     const segments: Segment[] = [];
     const weekStartDates = weeks.map((w) => w[0]!);
 
+    // On filtre cote client : pas d'affichage des holds (quote_hold) ni des annules.
+    const visibleEvents = events.filter(
+      (ev) => ev.status !== "cancelled" && ev.source !== "quote_hold",
+    );
+
     for (let wi = 0; wi < weeks.length; wi++) {
       const ws = weekStartDates[wi]!;
       const we = addDaysLocal(ws, 7);
       const weekParts: Array<Omit<Segment, "lane">> = [];
-      for (const ev of events) {
+      for (const ev of visibleEvents) {
         const seg = clampRangeToWeek(ev.start_date, ev.end_date, ws, we);
         if (!seg) continue;
         const startIdx = Math.max(0, Math.min(6, mondayIndex(seg.segStart.getDay())));
@@ -654,6 +667,8 @@ export function CalendarView({ properties }: { properties: Property[] }) {
           startCol: startIdx + 1,
           endCol: endIdx + 1,
           source: ev.source,
+          bookingId: ev.booking_id,
+          customerName: ev.customer_name,
         });
       }
 
@@ -1188,36 +1203,63 @@ export function CalendarView({ properties }: { properties: Property[] }) {
 
                 {segments.length > 0 && (
                   <div
-                    className="pointer-events-none absolute left-0 right-0 top-2 grid grid-cols-7 gap-px px-0"
+                    className="absolute left-0 right-0 top-2 grid grid-cols-7 gap-px px-0"
                     style={{ height: barArea }}
                   >
                     {segments.map((s) => {
                       const st = sourceStyle(s.source);
+                      const isClickable = s.source === "dashify" && s.bookingId !== null;
+                      const label =
+                        s.source === "dashify"
+                          ? (s.customerName ?? "Réservation")
+                          : s.source === "airbnb"
+                            ? "Airbnb"
+                            : s.source === "booking"
+                              ? "Booking"
+                              : "Blocage";
+
+                      const commonClass = cn(
+                        "mx-1 flex items-center rounded-md px-2 text-[11px] font-semibold",
+                        st.bg,
+                        st.ring,
+                        st.text,
+                      );
+                      const commonStyle = {
+                        gridColumn: `${s.startCol} / ${s.endCol + 1}`,
+                        marginTop: s.lane * (barHeight + barGap),
+                        height: barHeight,
+                      };
+
+                      if (isClickable) {
+                        return (
+                          <button
+                            key={s.key}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBookingId(s.bookingId);
+                            }}
+                            className={cn(
+                              commonClass,
+                              "cursor-pointer transition-all hover:brightness-125 hover:ring-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/60",
+                            )}
+                            style={commonStyle}
+                            title={`Voir les détails de la réservation${s.customerName ? ` de ${s.customerName}` : ""}`}
+                          >
+                            <span className={cn("mr-2 h-1.5 w-1.5 shrink-0 rounded-full", st.dot)} />
+                            <span className="truncate">{label}</span>
+                          </button>
+                        );
+                      }
+
                       return (
                         <div
                           key={s.key}
-                          className={cn(
-                            "mx-1 flex items-center rounded-md px-2 text-[11px] font-semibold",
-                            st.bg,
-                            st.ring,
-                            st.text,
-                          )}
-                          style={{
-                            gridColumn: `${s.startCol} / ${s.endCol + 1}`,
-                            marginTop: s.lane * (barHeight + barGap),
-                            height: barHeight,
-                          }}
+                          className={cn(commonClass, "pointer-events-none")}
+                          style={commonStyle}
                         >
-                          <span className={cn("mr-2 h-1.5 w-1.5 rounded-full", st.dot)} />
-                          <span className="truncate">
-                            {s.source === "dashify"
-                              ? "Réservation"
-                              : s.source === "airbnb"
-                                ? "Airbnb"
-                                : s.source === "booking"
-                                  ? "Booking"
-                                  : "Blocage"}
-                          </span>
+                          <span className={cn("mr-2 h-1.5 w-1.5 shrink-0 rounded-full", st.dot)} />
+                          <span className="truncate">{label}</span>
                         </div>
                       );
                     })}
@@ -1309,6 +1351,22 @@ export function CalendarView({ properties }: { properties: Property[] }) {
           </div>
         </div>
       )}
+
+      {/* Modal details reservation (clic sur barre dashify) */}
+      <BookingDetailsModal
+        bookingId={selectedBookingId}
+        onClose={() => setSelectedBookingId(null)}
+        onCancelled={() => {
+          // Refetch des events : la barre annulee disparaitra du calendrier.
+          // On force un refetch en re-settant propertyId a sa propre valeur.
+          setSelectedBookingId(null);
+          if (propertyId) {
+            const current = propertyId;
+            setPropertyId(null);
+            setTimeout(() => setPropertyId(current), 0);
+          }
+        }}
+      />
     </div>
   );
 }

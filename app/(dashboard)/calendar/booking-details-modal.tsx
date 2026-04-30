@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -213,7 +211,7 @@ export function BookingDetailsModal(props: Props) {
       });
       const json = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !json.ok) {
-        throw new Error(json.error ?? "Erreur lors de l''annulation.");
+        throw new Error(json.error ?? "Erreur lors de l'annulation.");
       }
       if (onCancelled) onCancelled();
       onClose();

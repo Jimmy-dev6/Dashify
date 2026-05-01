@@ -90,7 +90,7 @@ function Toggle({
   );
 }
 
-// Affiche "778696339" en "+221 77 869 63 39" pour l'input
+// Affiche "770000000" en "+221 77 000 00 00" pour l'input
 function formatMobileNumberDisplay(raw: string | null): string {
   if (!raw) return "";
   const digits = raw.replace(/\D/g, "");
@@ -518,7 +518,7 @@ export function SettingsView() {
               className={cn(inputClass(), "mt-1.5")}
               value={paymentOrangeMoney}
               onChange={(e) => setPaymentOrangeMoney(e.target.value)}
-              placeholder="+221 77 869 63 39"
+              placeholder="+221 77 000 00 00"
               inputMode="tel"
             />
             <p className="mt-1 text-xs text-gray-500">
@@ -535,7 +535,7 @@ export function SettingsView() {
               className={cn(inputClass(), "mt-1.5")}
               value={paymentWave}
               onChange={(e) => setPaymentWave(e.target.value)}
-              placeholder="+221 77 869 63 39"
+              placeholder="+221 77 000 00 00"
               inputMode="tel"
             />
             <p className="mt-1 text-xs text-gray-500">Numéro Wave (optionnel).</p>
@@ -550,7 +550,7 @@ export function SettingsView() {
               className={cn(inputClass(), "mt-1.5")}
               value={paymentFreeMoney}
               onChange={(e) => setPaymentFreeMoney(e.target.value)}
-              placeholder="+221 76 123 45 67"
+              placeholder="+221 76 000 00 00"
               inputMode="tel"
             />
             <p className="mt-1 text-xs text-gray-500">Numéro Free Money (optionnel).</p>
@@ -565,7 +565,7 @@ export function SettingsView() {
               className={cn(inputClass(), "mt-1.5")}
               value={paymentHolderName}
               onChange={(e) => setPaymentHolderName(e.target.value)}
-              placeholder="Ex. Jimmy Khater"
+              placeholder="Ex. Aïssa Diallo"
               maxLength={100}
             />
             <p className="mt-1 text-xs text-gray-500">

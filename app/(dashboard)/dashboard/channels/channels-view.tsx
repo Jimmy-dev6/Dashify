@@ -29,6 +29,8 @@ type PropertyWithChannels = {
   channels: Channel[];
 };
 
+type PlatformValue = "airbnb" | "booking" | "vrbo" | "expedia" | "other";
+
 function cn(...parts: Array<string | false | undefined | null>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -36,6 +38,8 @@ function cn(...parts: Array<string | false | undefined | null>) {
 function platformLabel(p: string) {
   if (p === "airbnb") return "Airbnb";
   if (p === "booking") return "Booking";
+  if (p === "vrbo") return "Vrbo";
+  if (p === "expedia") return "Expedia";
   return "Autre";
 }
 
@@ -57,6 +61,26 @@ function PlatformIcon({ platform }: { platform: string }) {
         title="Booking"
       >
         B
+      </span>
+    );
+  }
+  if (platform === "vrbo") {
+    return (
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-xs font-bold text-amber-200 ring-1 ring-amber-400/30"
+        title="Vrbo"
+      >
+        V
+      </span>
+    );
+  }
+  if (platform === "expedia") {
+    return (
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-yellow-500/20 text-xs font-bold text-yellow-200 ring-1 ring-yellow-400/30"
+        title="Expedia"
+      >
+        E
       </span>
     );
   }
@@ -200,7 +224,7 @@ export function ChannelsView() {
     <div>
       <PageHeader
         title="Channel Manager"
-        description="Connectez les flux iCal Airbnb, Booking ou autres pour alimenter le calendrier Dashify."
+        description="Connectez les flux iCal Airbnb, Booking, Vrbo, Expedia ou autres pour alimenter le calendrier Dashify."
         actions={
           <div className="flex flex-wrap gap-2">
             <button
@@ -257,7 +281,7 @@ export function ChannelsView() {
               </h3>
               <p className="mt-1 text-sm text-gray-300">
                 Vos {properties.length} logement{properties.length > 1 ? "s" : ""} n&apos;
-                {properties.length > 1 ? "ont" : "a"} pas encore de channel connecté. Liez chacun à votre annonce Airbnb et Booking via iCal pour une synchronisation automatique.
+                {properties.length > 1 ? "ont" : "a"} pas encore de channel connecté. Liez chacun à vos annonces Airbnb, Booking, Vrbo ou Expedia via iCal pour une synchronisation automatique.
               </p>
             </div>
             <button
@@ -306,6 +330,8 @@ export function ChannelsView() {
                   <div className="flex items-center gap-2">
                     <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-500/10 text-xs font-bold text-rose-300/60 ring-1 ring-rose-400/20">A</span>
                     <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600/10 text-xs font-bold text-blue-200/60 ring-1 ring-blue-400/20">B</span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-xs font-bold text-amber-200/60 ring-1 ring-amber-400/20">V</span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-500/10 text-xs font-bold text-yellow-200/60 ring-1 ring-yellow-400/20">E</span>
                   </div>
                   <div className="text-center sm:text-left">
                     <p className="text-sm font-medium text-gray-300">Aucun channel connecté</p>
@@ -314,7 +340,7 @@ export function ChannelsView() {
                       onClick={() => setHelpOpen(true)}
                       className="mt-0.5 text-xs text-teal-400 hover:text-teal-300 hover:underline"
                     >
-                      Comment ajouter Airbnb ou Booking ?
+                      Comment ajouter une plateforme ?
                     </button>
                   </div>
                 </div>
@@ -393,6 +419,7 @@ export function ChannelsView() {
     </div>
   );
 }
+
 function AddChannelModal({
   propertyId,
   propertyName,
@@ -404,7 +431,7 @@ function AddChannelModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [platform, setPlatform] = useState<"airbnb" | "booking" | "other">("airbnb");
+  const [platform, setPlatform] = useState<PlatformValue>("airbnb");
   const [icalUrl, setIcalUrl] = useState("");
   const [testing, setTesting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -416,7 +443,11 @@ function AddChannelModal({
       ? "Airbnb : Calendrier → Disponibilités → Exporter le calendrier"
       : platform === "booking"
         ? "Booking : Extranet → Calendrier → Synchronisation iCal"
-        : "Collez l'URL publique du flux .ics (HTTPS recommandé).";
+        : platform === "vrbo"
+          ? "Vrbo : Owner Dashboard → Calendar → Settings → Availability → Connect calendars → Export calendar"
+          : platform === "expedia"
+            ? "Expedia : Partner Central → Rooms & Rates → Manage Connected Calendars (option parfois cachée — contactez le support Expedia si introuvable)"
+            : "Collez l'URL publique du flux .ics (HTTPS recommandé).";
 
   async function testUrl() {
     setFormError(null);
@@ -499,13 +530,15 @@ function AddChannelModal({
             <select
               value={platform}
               onChange={(e) => {
-                setPlatform(e.target.value as "airbnb" | "booking" | "other");
+                setPlatform(e.target.value as PlatformValue);
                 setTestResult(null);
               }}
               className="h-10 rounded-lg border border-gray-800 bg-gray-950 px-3 text-sm text-white outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
             >
               <option value="airbnb">Airbnb</option>
               <option value="booking">Booking</option>
+              <option value="vrbo">Vrbo</option>
+              <option value="expedia">Expedia</option>
               <option value="other">Autre</option>
             </select>
           </label>

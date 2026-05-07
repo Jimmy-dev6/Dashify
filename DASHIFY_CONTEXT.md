@@ -449,3 +449,36 @@ Après design partners : tarif plein 10k, trial 30j standard, zéro remise.
 - Placeholders `<XXX>` dans les SQL : pré-remplir avec un vrai id quand possible
 - Modifier `next.config.mjs` : restart `npm run dev` obligatoire (pas de hot-reload)
 - Cursor peut afficher un fichier en mémoire qui n'existe pas sur disque (vérifier avec `Get-ChildItem` PowerShell, pas se fier à l'arborescence Cursor)
+## 12. PROJET YESSAL (en attente, démarrage conditionné)
+
+**Concept** : module e-commerce B2B intégré à Dashify (rubrique sidebar du dashboard).
+Mono-vendeur (Jimmy via société Yessal). Cibles = users Dashify (hôtes/conciergeries)
+qui commandent fournitures agro pour leurs logements. Yessal livre.
+
+**Triggers de démarrage (les deux requis)** :
+- [ ] APIX OK : extension activités NINEA Yessal pour couvrir "édition logiciels"
+      (résout aussi le problème EI Dashify Phase 3)
+- [ ] KYC PayDunya validé avec NINEA Yessal sur compte BSN1794937332 (partagé Dashify+Yessal)
+
+**Architecture validée** :
+- Une seule codebase, schéma `public` Supabase, tables préfixées `shop_*`
+- Auth Dashify réutilisée (pas de double login)
+- Routing : `/dashboard/yessal` (client) + `/dashboard/admin/yessal` (Jimmy)
+- Paiement auto = PayDunya hosted checkout (OM/Wave/FM/carte)
+- Webhook `/api/webhooks/paydunya` idempotent mutualisé avec Phase 3 Dashify SaaS
+- Adresse livraison pré-remplie depuis logements Dashify de l'hôte
+
+**Plan MVP en 5 paliers (~9-11 jours dev)** :
+- P0 (parallèle) : APIX + KYC PayDunya + seed 5-10 produits (photos, prix, descriptions)
+- P1 (2j) : DB + admin catalogue — tables `shop_categories`, `shop_products`,
+  `shop_product_images`, `shop_delivery_zones`, RLS strictes admin/clients
+- P2 (2j) : catalogue + panier côté client, adresse livraison pré-remplie
+- P3 (3j) : checkout + intégration PayDunya + webhook idempotent
+- P4 (1-2j) : admin commandes, statuts `pending_payment→paid→preparing→out_for_delivery→delivered`
+- P5 (1-2j) : factures PDF avec NINEA Yessal + polish
+
+**À reclarifier au démarrage** :
+- Zone de livraison MVP (Dakar tarif unique / zoné / autre)
+- Gestion stock (fixe en DB / sur commande / mixte)
+- Branding sidebar (Yessal / Boutique / Yessal — fournitures)
+- Confirmation compte PayDunya partagé Dashify+Yessal

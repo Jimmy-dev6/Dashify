@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-const PLATFORMS = ["airbnb", "booking", "other"] as const;
+const PLATFORMS = ["airbnb", "booking", "vrbo", "expedia", "other"] as const;
 
 function isPlatform(s: string): s is (typeof PLATFORMS)[number] {
   return (PLATFORMS as readonly string[]).includes(s);

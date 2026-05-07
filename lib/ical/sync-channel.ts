@@ -4,7 +4,7 @@ import { parseIcsEvents } from "@/lib/ical/parse-ics";
 export type ChannelRow = {
   id: string;
   property_id: string;
-  platform: "airbnb" | "booking" | "other";
+  platform: "airbnb" | "booking" | "vrbo" | "expedia" | "other";
   ical_url: string;
   is_active: boolean;
   error_count: number;

@@ -35,3 +35,9 @@ yarn-error.log*
 next-env.d.ts
 
 backups/
+
+# Scripts PowerShell perso (déploiement, migrations, etc.)
+/*.ps1
+
+# Fichiers sans nom créés accidentellement par Cursor
+**/Untitled

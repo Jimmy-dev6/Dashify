@@ -1,0 +1,280 @@
+---
+title: "Synchroniser ton calendrier Airbnb, Booking, Vrbo et Expedia : guide iCal complet 2026"
+excerpt: "Lister ton logement sur plusieurs plateformes multiplie les résas — et le risque de double booking. Voici comment synchroniser proprement Airbnb, Booking.com, Vrbo et Expedia avec iCal. Spécial hôtes au Sénégal."
+date: "2026-05-14"
+author: "Jimmy Khater"
+tags: ["channel manager", "ical", "airbnb", "booking", "vrbo", "expedia", "double booking", "sénégal", "guide"]
+faq:
+  - question: "Comment éviter les doubles bookings entre Airbnb et Booking.com ?"
+    answer: "Active la synchronisation iCal entre les deux plateformes. Dans Airbnb : Calendrier → Disponibilité → Synchronisation. Dans Booking.com : Calendrier → Synchroniser les calendriers. Tu copies l'URL iCal de chaque plateforme et tu la colles dans l'autre. La synchronisation prend généralement entre 30 minutes et 2 heures à chaque mise à jour."
+  - question: "Les flux iCal sur Airbnb, Booking, Vrbo et Expedia sont-ils gratuits ?"
+    answer: "Oui, totalement gratuits sur les 4 plateformes. C'est une fonctionnalité native incluse, sans abonnement supplémentaire. La seule limite : la fréquence de synchronisation (30 minutes à 2 heures selon la plateforme), qui peut laisser une petite fenêtre de risque pendant les périodes de haute activité."
+  - question: "Combien de temps prend la synchronisation iCal entre deux plateformes ?"
+    answer: "Entre 30 minutes et 2 heures selon les plateformes. Airbnb met généralement à jour toutes les 1-2 heures, Booking.com toutes les 30 minutes à 1 heure, Vrbo et Expedia toutes les 1-2 heures. Pendant cette fenêtre, un double booking reste théoriquement possible — c'est rare mais ça arrive en haute saison."
+  - question: "Vrbo supporte-t-il vraiment iCal pour les calendriers ?"
+    answer: "Oui, Vrbo (groupe Expedia) supporte iCal nativement depuis le Owner Dashboard. Tu trouves l'option dans Calendar → Reservation Manager → Import/Export Calendar. Tu peux exporter ton URL iCal Vrbo et importer celles d'autres plateformes."
+  - question: "Comment activer iCal sur Expedia Partner Central ?"
+    answer: "L'option iCal sur Expedia Partner Central existe mais est parfois cachée dans Rooms & Rates → Manage Connected Calendars. Si tu ne la vois pas, contacte le support Expedia (en anglais) en demandant explicitement l'activation iCal — ils peuvent l'ouvrir manuellement sur ton compte."
+  - question: "Peut-on synchroniser les tarifs avec iCal ?"
+    answer: "Non. L'iCal synchronise uniquement les dates de disponibilité (bloquées ou libres), pas les tarifs ni les politiques. Pour synchroniser les prix entre plateformes, il faut un vrai channel manager pro (PriceLabs, BeyondPricing, ou un outil tout-en-un comme Dashify). Pour la plupart des petits hôtes au Sénégal, l'iCal pour les dates et la gestion manuelle des prix suffit largement au démarrage."
+  - question: "Que faire si la synchronisation iCal a échoué et qu'un client a double-bookéé ?"
+    answer: "Réponds vite et avec honnêteté. Contacte d'abord le client le moins prioritaire (résa la plus récente, sans paiement encore versé, ou client moins fidèle), explique la situation, propose une compensation (autre logement, remboursement intégral, ou réduction sur un séjour futur). Ne laisse jamais le client se présenter à la porte sans préavis : c'est un avis 1 étoile garanti sur la plateforme concernée."
+---
+
+Imagine la scène : il est 22h un vendredi soir. Tu as fini ta journée, tu prépares à te coucher. Ton téléphone vibre. C'est un client qui te dit "Bonjour, je suis devant la porte, j'ai bien réservé pour cette nuit sur Booking.com".
+
+Sauf que tu sais que ton appart est occupé. Tu as un client Airbnb qui est arrivé hier et qui repart dans 3 jours. Tu ouvres ton calendrier Airbnb : occupé. Tu ouvres Booking.com : occupé aussi (par la résa qui sonne à ta porte). Mais sur Airbnb tu vois bien que c'est ton client précédent qui occupe la chambre.
+
+**Double booking**. Le cauchemar de tout hôte multi-plateformes au Sénégal.
+
+Tu as deux clients qui ont payé pour la même nuit, et tu ne peux les caser que dans un seul lit. Le client en face de la porte attend ta réponse. Tu vas devoir :
+
+- Trouver une solution dans les 30 prochaines minutes
+- Rembourser quelqu'un en urgence
+- Te taper un avis 1 étoile public qui flinguera ton taux de remplissage pour 6 mois
+- Potentiellement compenser à tes frais une nuit dans un autre logement
+
+**Et tout ça arrive parce que tes calendriers n'étaient pas synchronisés.** Dans cet article, on règle ce problème une fois pour toutes. Tu vas apprendre comment synchroniser Airbnb, Booking.com, Vrbo et Expedia via iCal — gratuit, natif, en moins de 30 minutes pour les 4 plateformes.
+
+---
+
+## Pourquoi tu DEVRAIS lister sur plusieurs plateformes au Sénégal
+
+Avant de parler synchronisation, parlons stratégie. Beaucoup d'hôtes au Sénégal ne listent que sur Airbnb par habitude. C'est une erreur. Chaque plateforme a son public :
+
+- **Airbnb** : leader mondial, fort sur la diaspora et les expats, ~60% des touristes occidentaux à Dakar passent par là. Indispensable.
+- **Booking.com** : leader européen, **excellent sur les voyageurs d'affaires** (cadres et délégations qui viennent à Dakar pour 2-3 nuits). Souvent sous-utilisé par les hôtes africains alors qu'il y a un gros potentiel.
+- **Vrbo** (groupe Expedia, ex-HomeAway) : forte audience nord-américaine (US, Canada), idéal pour les longs séjours familiaux. Petite niche au Sénégal mais des séjours de **7+ nuits** très rentables.
+- **Expedia** : portails groupés avec Hotels.com, Trivago, etc. Visibilité large, surtout en haute saison touristique (novembre-mars).
+
+**Lister sur 3 plateformes au lieu d'une seule augmente ton taux d'occupation moyen de 15 à 25%**, selon les retours terrain qu'on recueille auprès des hôtes design partners de Dashify. Ce n'est pas magique : c'est mécanique. Plus de visibilité = plus de demandes.
+
+Le seul vrai obstacle ? **La gestion des doubles bookings**. Tant que tu n'as pas réglé ce problème, multiplier les plateformes = multiplier les risques.
+
+C'est ce que résout iCal.
+
+---
+
+## C'est quoi iCal, expliqué simplement
+
+iCal (ou "iCalendar") est un **format standard** de calendrier utilisé partout sur internet. C'est le même format qui te permet d'ajouter un événement Google Agenda à ton calendrier Outlook, ou de t'abonner au calendrier des matchs de l'équipe nationale du Sénégal.
+
+Côté location courte durée, chaque plateforme (Airbnb, Booking, etc.) te donne accès à **deux types d'URLs iCal** :
+
+1. **Une URL d'export** — qui contient toutes tes dates bloquées sur cette plateforme. Tu la copies, tu la donnes aux autres plateformes.
+2. **Un emplacement d'import** — où tu colles les URLs des AUTRES plateformes. Comme ça, quand un client réserve sur Booking, cette plateforme va lire l'URL iCal d'Airbnb toutes les 30 min - 2h, et bloquer automatiquement les dates correspondantes chez elle.
+
+C'est **gratuit, natif, sur toutes les grandes plateformes**. Pas besoin d'abonnement, pas besoin d'outil tiers pour la base.
+
+<Callout type="info">
+**Limite à connaître** : iCal synchronise uniquement les **dates de disponibilité** (bloquées ou libres). Pas les tarifs, pas les politiques d'annulation, pas les descriptions. Pour les tarifs synchronisés, il faut un vrai channel manager pro — mais pour 90% des hôtes au Sénégal en démarrage, l'iCal natif suffit largement.
+</Callout>
+
+---
+
+## Tutoriel pratique : synchroniser Airbnb ↔ Booking.com
+
+Commençons par le duo le plus utilisé au Sénégal. Tu listes sur Airbnb et Booking, et tu veux que les dates se bloquent automatiquement des deux côtés quand un client réserve.
+
+### Étape 1 — Récupérer l'URL iCal d'Airbnb
+
+1. Connecte-toi à **Airbnb.com** (depuis un ordinateur, c'est plus simple)
+2. Va sur **Calendrier** → sélectionne le logement concerné
+3. Clique sur **Disponibilité** dans le menu de droite
+4. Descends jusqu'à **Synchronisation des calendriers**
+5. Clique sur **Exporter le calendrier**
+6. Copie l'URL qui commence par `https://www.airbnb.com/calendar/ical/...`
+
+Garde cette URL bien au chaud — on va la coller dans Booking dans une minute.
+
+### Étape 2 — Coller l'URL Airbnb dans Booking.com
+
+1. Connecte-toi à **Booking.com (Extranet hôte)**
+2. Va sur **Calendrier** → sélectionne ta chambre ou logement
+3. Clique sur **Synchroniser les calendriers**
+4. Clique sur **Importer un calendrier**
+5. Donne-lui un nom (genre "Airbnb") et colle l'URL Airbnb
+6. Valide
+
+À partir de maintenant, **toutes les résas Airbnb vont automatiquement bloquer Booking**, avec un délai de 30 min à 2h.
+
+### Étape 3 — Récupérer l'URL iCal de Booking.com
+
+Pendant qu'on y est, on fait le sens inverse :
+
+1. Toujours dans **Booking.com Extranet → Calendrier**
+2. **Synchroniser les calendriers** → **Exporter ce calendrier**
+3. Copie l'URL qui commence par `https://admin.booking.com/hotel/...`
+
+### Étape 4 — Coller l'URL Booking dans Airbnb
+
+1. Retour sur **Airbnb → Calendrier → Disponibilité → Synchronisation des calendriers**
+2. **Importer un calendrier** (et non "exporter" cette fois)
+3. Nomme-le "Booking.com" et colle l'URL
+4. Sauvegarde
+
+**Voilà.** Tes deux plateformes principales sont maintenant synchronisées dans les deux sens. Quand un client réserve sur Airbnb, Booking le bloque dans 30 min à 2h. Et vice-versa.
+
+<Callout type="tip">
+**Astuce pratique** : note la date et l'heure exactes où tu as activé la synchronisation. Pendant les premières 24h, jette un œil aux deux calendriers pour vérifier que les blocages remontent bien. Si tu vois un écart, refais l'opération — parfois un copier-coller foire et l'URL est incomplète.
+</Callout>
+
+---
+
+## Ajouter Vrbo dans le mix
+
+Vrbo est moins utilisé au Sénégal que Airbnb/Booking, mais c'est une niche intéressante (séjours familiaux long-stay nord-américains, souvent rentables).
+
+### Récupérer l'URL iCal de Vrbo
+
+1. Connecte-toi à **Vrbo.com** depuis ton **Owner Dashboard**
+2. Va sur **Calendar** (Calendrier)
+3. Sélectionne **Reservation Manager** ou **Calendar Settings**
+4. Cherche **Import/Export Calendar** ou **iCalendar Integration**
+5. Clique sur **Export Calendar** pour récupérer ton URL Vrbo
+
+### Connecter Vrbo aux autres plateformes
+
+- Colle l'URL Vrbo dans **Airbnb** (Calendrier → Synchronisation → Importer)
+- Colle l'URL Vrbo dans **Booking.com** (Calendrier → Synchroniser → Importer)
+- À l'inverse, importe les URLs Airbnb et Booking dans Vrbo (même section, **Import Calendar**)
+
+**Résultat** : 3 plateformes synchronisées en étoile. Toute résa sur l'une bloque automatiquement les deux autres.
+
+---
+
+## Le cas particulier d'Expedia Partner Central
+
+Expedia a la plus mauvaise UX iCal des 4 plateformes. **L'option existe mais elle est parfois cachée**, et certains hôtes ne la trouvent pas du premier coup.
+
+### Où chercher
+
+1. Connecte-toi à **Expedia Partner Central**
+2. Va sur **Rooms & Rates** (Chambres et tarifs)
+3. Cherche **Manage Connected Calendars** ou **Calendar Sync**
+4. Si tu vois l'option : import/export comme les autres plateformes
+5. **Si tu ne vois pas l'option** : c'est qu'elle n'est pas activée par défaut sur ton compte. Contacte le support Expedia (en anglais) et demande explicitement : "Please activate iCal integration on my listing." Ils l'ouvrent manuellement.
+
+<Callout type="warning">
+**Si tu galères avec Expedia** : ne perds pas une journée dessus. La plateforme représente probablement moins de 10% de tes résas au Sénégal. Si l'iCal Expedia ne s'active pas, tu peux le gérer **manuellement** au quotidien (bloquer à la main quand tu as une résa ailleurs) en attendant. C'est imparfait mais ça marche pour des petits volumes.
+</Callout>
+
+---
+
+## Les limites de l'iCal natif (qu'il faut connaître)
+
+L'iCal résout 90% du problème. Mais il a des limites qu'il faut connaître pour éviter les mauvaises surprises.
+
+### Limite 1 : la fenêtre de synchronisation
+
+L'iCal ne synchronise **pas en temps réel**. Chaque plateforme rafraîchit les URLs externes à sa fréquence :
+
+- Airbnb : toutes les 1-2 heures
+- Booking.com : toutes les 30 min - 1 heure
+- Vrbo : toutes les 1-2 heures
+- Expedia : toutes les 1-2 heures
+
+**Conséquence pratique** : il y a une fenêtre de 30 min à 2h pendant laquelle un double booking reste théoriquement possible. C'est rare, mais pendant les périodes de très forte demande (Magal, Tabaski, CAN, Dakar Rally, Eid), le risque augmente.
+
+### Limite 2 : aucun synchro des tarifs
+
+L'iCal ne synchronise QUE les dates. Donc si tu décides de monter ton prix de 30 000 à 50 000 FCFA pour la Tabaski sur Airbnb, tu dois aller le changer **manuellement** sur Booking, Vrbo et Expedia. Sinon tu loueras moins cher sur certaines plateformes sans le vouloir.
+
+### Limite 3 : pas de gestion des politiques
+
+Politiques d'annulation, suppléments ménage, frais de service, taxes locales : aucun de ces éléments ne se synchronise via iCal. Tu dois les configurer plateforme par plateforme.
+
+### Limite 4 : pas de vue unifiée
+
+L'iCal connecte les plateformes entre elles, mais **tu n'as pas de calendrier central** où tu vois tout. Tu dois continuer à jongler entre 4 onglets, 4 mots de passe, 4 interfaces différentes.
+
+C'est pour ces 4 raisons que les hôtes pros — ceux avec 3+ logements ou 50+ résas par mois — finissent par utiliser un outil tout-en-un.
+
+---
+
+## La solution Dashify : un hub central, pas un remplacement
+
+Dashify est conçu pour résoudre les limites de l'iCal **sans te forcer à quitter tes plateformes existantes**. L'idée :
+
+- Tu gardes tes annonces Airbnb, Booking, Vrbo, Expedia
+- Tu connectes leurs URLs iCal à Dashify (en quelques clics)
+- Dashify centralise toutes tes résas dans **un seul calendrier unifié**
+- Tu vois en un coup d'œil : telle nuit = résa Airbnb (Cheikh Fall), telle autre = résa Booking (Marie Dubois), telle autre = résa directe via WhatsApp (Aminata Sarr)
+- Tu peux **bloquer une date dans Dashify** et ça pousse automatiquement vers toutes les plateformes connectées
+
+Le tout en français, pensé pour le marché ouest-africain, avec les 4 plateformes majeures supportées : **Airbnb, Booking, Vrbo, Expedia**.
+
+C'est exactement le mix que les hôtes pros ont besoin pour gérer 3-10 logements sans se noyer.
+
+<Callout type="info">
+**Le détail qui change tout** : sur Dashify, le calendrier affiche le **nom du client** sur chaque réservation. Donc tu sais en un clic que la nuit du 18 mai = "Cheikh Fall, Airbnb, 3 nuits, payé 90 000 FCFA". Plus besoin d'aller checker dans 4 plateformes pour savoir qui dort chez toi.
+</Callout>
+
+---
+
+## Cas pratique : un appart Mermoz multi-plateformes
+
+Pour rendre tout ça concret, prenons un exemple type. Cheikh est hôte d'un studio à Mermoz qu'il loue **30 000 FCFA/nuit en moyenne**. Il a listé sur Airbnb depuis 18 mois, sur Booking depuis 6 mois, et il vient d'ouvrir une annonce Vrbo.
+
+**Avant la synchronisation** :
+- Airbnb : 18 résas/mois, 540 000 FCFA brut, -16% commission = **454 000 FCFA net**
+- Booking : 4 résas/mois, 120 000 FCFA brut, -15% commission = **102 000 FCFA net**
+- Vrbo : annonce live mais 0 résa parce que peur du double booking
+
+Cheikh préfère ne pas activer Vrbo activement parce qu'il a déjà eu **deux doubles bookings** entre Airbnb et Booking. À chaque fois : remboursement, mauvais avis, stress.
+
+**Après synchronisation iCal en étoile** (Airbnb ↔ Booking ↔ Vrbo) :
+- Plus aucun double booking (en 4 mois)
+- Vrbo activé sereinement : 3 résas/mois en moyenne (souvent des séjours plus longs nord-américains)
+- Airbnb : 16 résas/mois (taux d'occupation similaire mais avec quelques nuits maintenant prises par Vrbo et Booking)
+- Booking : 6 résas/mois (+50% vs avant — confiance dans la synchro)
+- Vrbo : 3 résas/mois (séjours moyens 5 nuits, 150 000 FCFA chacun)
+
+**Total mensuel** : ~640 000 FCFA brut, **~542 000 FCFA net** après commissions.
+
+**Différence** : +86 000 FCFA/mois grâce à la synchro multi-plateformes. Sur l'année, c'est **plus d'un million de FCFA en plus** — sans changer son logement, sans augmenter ses prix, juste en activant proprement les plateformes secondaires.
+
+---
+
+## Récap : ton plan iCal en 30 minutes
+
+Si tu veux activer la synchro iCal aujourd'hui même, voici la checklist :
+
+1. **Connecte-toi à Airbnb** (10 min) → Calendrier → Synchronisation → Export. Copie l'URL.
+2. **Connecte-toi à Booking** (10 min) → Calendrier → Synchroniser → Import. Colle l'URL Airbnb. Export l'URL Booking.
+3. **Retour Airbnb** → Import l'URL Booking.
+4. **Si tu as Vrbo ou Expedia** → ajoute leurs URLs au mix (10 min).
+5. **Lis attentivement** les 24 prochaines heures pour vérifier que les synchros fonctionnent.
+
+Tu peux aussi consulter notre [guide iCal complet en PDF](/aide/ical) pour les détails plateforme par plateforme — 13 pages, screenshots, à jour 2026.
+
+Si tu veux gérer plus proprement avec un calendrier central, [Dashify](/contact) supporte les 4 plateformes en bêta — on est en phase design partners au Sénégal.
+
+---
+
+## Pour aller plus loin
+
+Cet article fait partie d'un cluster de guides pour hôtes au Sénégal :
+
+- [**Recevoir un paiement Airbnb au Sénégal : Wave, Orange Money ou Free Money ?**](/blog/paiement-airbnb-senegal-wave-orange-money-free-money) — comment encaisser proprement quand un client te paie en direct.
+- [**Comment éviter la commission Airbnb : guide WhatsApp 2026**](/blog/eviter-commission-airbnb-whatsapp-senegal-guide-2026) — comment migrer une partie de tes clients vers le canal direct sans te faire bannir.
+
+Les trois ensemble forment la **base opérationnelle d'un hôte courte durée pro au Sénégal en 2026** : tu gères ton calendrier (cet article), tu rentabilises Airbnb (article commission), tu encaisses sans intermédiaire (article Mobile Money).
+
+---
+
+## Ce qu'il faut retenir
+
+Le double booking n'est pas une fatalité. C'est un **problème de tooling**, et le tooling existe — gratuit, natif, intégré à toutes les grandes plateformes via iCal.
+
+Au Sénégal en 2026, **lister sur 3+ plateformes est devenu le standard** pour qui veut maximiser son taux d'occupation sans sacrifier sa marge. La règle :
+
+- **Airbnb** = canal d'acquisition principal (diaspora, expats)
+- **Booking** = volume voyageurs d'affaires
+- **Vrbo / Expedia** = séjours familiaux long-stay (US/Canada)
+- **Direct WhatsApp** = fidélisation, recommandations
+- **iCal** = colle qui tient le tout ensemble
+
+Si tu n'as pas encore activé tes synchros, fais-le **cette semaine**. Trente minutes de paramétrage maintenant te sauveront probablement 2-3 doubles bookings dans l'année, et 200 000 à 400 000 FCFA de nuits perdues.
+
+À toi de jouer.

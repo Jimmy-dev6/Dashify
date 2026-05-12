@@ -28,7 +28,7 @@ export function getPostBySlug(slug: string): BlogPost | null {
     title: data.title ?? "Sans titre",
     excerpt: data.excerpt ?? "",
     date: data.date ?? new Date().toISOString(),
-    author: data.author ?? "Jimmy Khater",
+    author: data.author ?? "L'équipe Dashify",
     tags: Array.isArray(data.tags) ? data.tags : [],
     cover: data.cover,
     faq: Array.isArray(data.faq) ? data.faq : undefined,

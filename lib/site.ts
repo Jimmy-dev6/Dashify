@@ -10,7 +10,7 @@ export const SITE_NAME = "Dashify";
 export const SITE_DESCRIPTION =
   "SaaS de gestion de locations courte durée pour hôtes ouest-africains. Mobile Money, calendrier, événements locaux, devis WhatsApp.";
 
-export const AUTHOR_NAME = "Jimmy Khater";
+export const AUTHOR_NAME = "L'équipe Dashify";
 
 export const PUBLISHER_LOGO = `${SITE_URL}/logo.png`;
 

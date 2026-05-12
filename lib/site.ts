@@ -8,7 +8,7 @@ export const SITE_URL =
 export const SITE_NAME = "Dashify";
 
 export const SITE_DESCRIPTION =
-  "SaaS de gestion de locations courte duree pour hotes ouest-africains. Mobile Money, calendrier, evenements locaux, devis WhatsApp.";
+  "SaaS de gestion de locations courte durée pour hôtes ouest-africains. Mobile Money, calendrier, événements locaux, devis WhatsApp.";
 
 export const AUTHOR_NAME = "Jimmy Khater";
 

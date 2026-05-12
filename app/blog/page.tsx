@@ -1,11 +1,38 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllPosts } from "@/lib/blog/posts";
+import {
+  SITE_URL,
+  SITE_NAME,
+  SITE_LOCALE,
+  DEFAULT_OG_IMAGE,
+} from "@/lib/site";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Blog Dashify â€” Guides et ressources pour hÃ´tes courte durÃ©e",
   description:
     "Guides pratiques pour les hÃ´tes Airbnb, Booking, Vrbo au SÃ©nÃ©gal et en Afrique de l'Ouest. Mobile Money, gestion calendrier, Ã©vÃ©nements locaux, rentabilitÃ©.",
+  alternates: {
+    canonical: `${SITE_URL}/blog`,
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: SITE_LOCALE,
+    url: `${SITE_URL}/blog`,
+    title: "Blog Dashify â€” Guides pour hÃ´tes courte durÃ©e",
+    description:
+      "Guides pratiques pour les hÃ´tes Airbnb, Booking, Vrbo au SÃ©nÃ©gal. Mobile Money, calendrier, Ã©vÃ©nements locaux.",
+    images: [{ url: DEFAULT_OG_IMAGE }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Blog Dashify â€” Guides pour hÃ´tes courte durÃ©e",
+    description:
+      "Guides pratiques pour les hÃ´tes Airbnb, Booking, Vrbo au SÃ©nÃ©gal. Mobile Money, calendrier, Ã©vÃ©nements locaux.",
+    images: [DEFAULT_OG_IMAGE],
+  },
 };
 
 function formatDate(iso: string): string {

@@ -4,7 +4,14 @@ import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { mdxComponents } from "@/components/blog/mdx-components";
 import { FAQ } from "@/components/blog/FAQ";
+import { BlogJsonLd } from "@/components/blog/JsonLd";
 import { getAllPostSlugs, getPostBySlug } from "@/lib/blog/posts";
+import {
+  SITE_URL,
+  SITE_NAME,
+  SITE_LOCALE,
+  DEFAULT_OG_IMAGE,
+} from "@/lib/site";
 
 type Props = {
   params: { slug: string };
@@ -17,24 +24,38 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: Props): Metadata {
   const post = getPostBySlug(params.slug);
   if (!post) {
-    return { title: "Article introuvable â€” Dashify" };
+    return {
+      metadataBase: new URL(SITE_URL),
+      title: "Article introuvable â€” Dashify",
+    };
   }
+
+  const canonicalUrl = `${SITE_URL}/blog/${post.slug}`;
+  const ogImage = post.cover ?? DEFAULT_OG_IMAGE;
+
   return {
+    metadataBase: new URL(SITE_URL),
     title: `${post.title} â€” Dashify`,
     description: post.excerpt,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
+      type: "article",
+      siteName: SITE_NAME,
+      locale: SITE_LOCALE,
+      url: canonicalUrl,
       title: post.title,
       description: post.excerpt,
-      type: "article",
       publishedTime: post.date,
       authors: [post.author],
-      images: post.cover ? [{ url: post.cover }] : undefined,
+      images: [{ url: ogImage }],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
-      images: post.cover ? [post.cover] : undefined,
+      images: [ogImage],
     },
   };
 }
@@ -55,6 +76,8 @@ export default function BlogPostPage({ params }: Props) {
 
   return (
     <article>
+      <BlogJsonLd post={post} />
+
       <header className="mb-10">
         {post.tags.length > 0 && (
           <div className="mb-4 flex flex-wrap gap-2">
